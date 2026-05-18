@@ -1,0 +1,25 @@
+VialSystems - Fase 09 - Reportes PDF simples y busqueda avanzada
+
+OBJETIVO
+Permitir que oficina genere documentos compartibles sin complicar el MVP.
+
+ENTREGABLES
+- PDF simple de remito
+- PDF por obra/fecha
+- Busqueda avanzada
+- Exportacion basica
+- Registro historico
+
+NO HACER EN ESTA FASE
+- No crear plantillas complejas
+- No crear facturacion
+- No crear reportes financieros avanzados
+
+PROMPT PARA ANTIGRAVITY
+Implementa reportes PDF simples en el panel web de VialSystems. Crear PDF individual de remito y PDF filtrado por obra/fecha. Incluir datos principales y fotos o referencias a fotos si corresponde. Agregar busqueda avanzada por obra, fecha, usuario, material y transportista. No crear plantillas complejas, facturacion ni reportes financieros avanzados.
+
+CRITERIO DE CIERRE
+- Compila sin errores criticos.
+- La funcion principal puede probarse.
+- Hay commit de GitHub.
+- No se agregaron funciones fuera del alcance.

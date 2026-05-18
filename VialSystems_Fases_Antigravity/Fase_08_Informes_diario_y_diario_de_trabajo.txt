@@ -1,0 +1,25 @@
+VialSystems - Fase 08 - Informes diario y diario de trabajo
+
+OBJETIVO
+Agregar los otros formularios independientes una vez estabilizado el modulo de acarreo.
+
+ENTREGABLES
+- Formulario Informe Diario
+- Formulario Informe Diario de Trabajo
+- Asociacion a obra
+- Usuario responsable
+- Validaciones obligatorias
+- Historial por obra
+
+NO HACER EN ESTA FASE
+- No mezclar estos formularios con remitos
+- No cambiar reglas del modulo de acarreo ya estable
+
+PROMPT PARA ANTIGRAVITY
+Agrega los modulos Informe Diario e Informe Diario de Trabajo como formularios independientes dentro de VialSystems. Deben asociarse a una obra activa, usuario responsable y fecha. Reutilizar componentes ya creados para validaciones, guardado local y sincronizacion. No mezclar estos formularios con el Informe de Acarreo de Materiales. Mantener cada documento independiente.
+
+CRITERIO DE CIERRE
+- Compila sin errores criticos.
+- La funcion principal puede probarse.
+- Hay commit de GitHub.
+- No se agregaron funciones fuera del alcance.

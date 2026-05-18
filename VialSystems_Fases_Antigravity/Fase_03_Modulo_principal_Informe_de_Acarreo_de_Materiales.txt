@@ -1,0 +1,31 @@
+VialSystems - Fase 03 - Modulo principal: Informe de Acarreo de Materiales
+
+OBJETIVO
+Construir primero el formulario mas critico: un remito por viaje.
+
+ENTREGABLES
+- Formulario de acarreo/remito
+- Numero de guia obligatorio
+- Obra asociada
+- Procedencia y destino
+- Material transportado
+- Cantidad m3
+- Empresa transportista
+- Chofer y matriculas
+- Hora de descarga
+- Observaciones
+- Estado borrador/enviado
+
+NO HACER EN ESTA FASE
+- No crear los otros formularios en esta fase
+- No crear dashboard web todavia
+- No hacer PDF final todavia
+
+PROMPT PARA ANTIGRAVITY
+Implementa solamente el modulo Informe de Acarreo de Materiales de VialSystems. Regla central: un remito corresponde a un viaje. Campos requeridos: fecha, numero de guia oficial, obra, procedencia del material, destino, tipo de material, cantidad en m3, empresa transportista, chofer, matricula camion, matricula acoplado, hora de descarga y observaciones opcionales. Debe permitir guardar borrador y enviar. Validar obligatorios antes de enviar. Usar dropdowns con opcion Agregar. No implementes otros formularios, dashboard web ni PDFs todavia.
+
+CRITERIO DE CIERRE
+- Compila sin errores criticos.
+- La funcion principal puede probarse.
+- Hay commit de GitHub.
+- No se agregaron funciones fuera del alcance.

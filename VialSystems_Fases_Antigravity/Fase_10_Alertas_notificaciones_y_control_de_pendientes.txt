@@ -1,0 +1,25 @@
+VialSystems - Fase 10 - Alertas, notificaciones y control de pendientes
+
+OBJETIVO
+Reducir perdida de informacion y documentos incompletos.
+
+ENTREGABLES
+- Alertas de formularios incompletos
+- Notificaciones push basicas
+- Resumen de pendientes
+- Recordatorio de envio
+- Vista de errores
+
+NO HACER EN ESTA FASE
+- No crear automatizaciones IA complejas
+- No saturar al usuario con notificaciones
+- No crear reglas empresariales demasiado rigidas
+
+PROMPT PARA ANTIGRAVITY
+Agrega alertas y notificaciones basicas a VialSystems para reducir perdida de informacion. Alertar cuando existan borradores sin enviar, remitos sin foto obligatoria, errores de sincronizacion o documentos pendientes por obra/usuario. Si el backend lo permite, implementar push notifications simples. No crear automatizaciones IA complejas ni saturar al usuario con mensajes.
+
+CRITERIO DE CIERRE
+- Compila sin errores criticos.
+- La funcion principal puede probarse.
+- Hay commit de GitHub.
+- No se agregaron funciones fuera del alcance.

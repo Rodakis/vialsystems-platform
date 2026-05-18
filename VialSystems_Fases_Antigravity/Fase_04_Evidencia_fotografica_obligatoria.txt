@@ -1,0 +1,25 @@
+VialSystems - Fase 04 - Evidencia fotografica obligatoria
+
+OBJETIVO
+Asegurar que cada remito tenga fotos asociadas correctamente antes de enviarse.
+
+ENTREGABLES
+- Captura/adjunto de fotos
+- Relacion foto-remito
+- Validacion minima de cantidad
+- Vista previa de fotos
+- Estado de evidencia completa/incompleta
+
+NO HACER EN ESTA FASE
+- No implementar reconocimiento IA de imagen
+- No implementar almacenamiento definitivo complejo antes de sync
+- No pedir GPS
+
+PROMPT PARA ANTIGRAVITY
+Agrega al modulo Informe de Acarreo de Materiales una capa de evidencia fotografica obligatoria. Cada remito debe tener al menos 1 foto valida asociada al numero de guia/remito antes de poder enviarse. Permitir tomar o adjuntar foto, ver miniaturas, eliminar o reemplazar antes del envio y guardar metadatos: remito, fecha, usuario y tipo de evidencia. Comprimir imagen para uso movil. No implementar IA visual, GPS ni almacenamiento cloud avanzado todavia.
+
+CRITERIO DE CIERRE
+- Compila sin errores criticos.
+- La funcion principal puede probarse.
+- Hay commit de GitHub.
+- No se agregaron funciones fuera del alcance.

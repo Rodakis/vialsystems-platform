@@ -1,0 +1,26 @@
+VialSystems - Fase 06 - Backend cloud y sincronizacion basica
+
+OBJETIVO
+Conectar la app movil con una base real usando Supabase o Firebase.
+
+ENTREGABLES
+- Tablas/colecciones principales
+- API o SDK configurado
+- Upload de formularios
+- Upload de fotos
+- Backups iniciales
+- Reglas basicas de seguridad
+
+NO HACER EN ESTA FASE
+- No crear SaaS multiempresa todavia
+- No crear dashboards avanzados todavia
+- No crear integraciones WhatsApp/Excel aun
+
+PROMPT PARA ANTIGRAVITY
+Conecta VialSystems a un backend cloud, preferentemente Supabase o Firebase. Crear estructura para usuarios, obras, catalogos, remitos de acarreo y fotos. Sincronizar remitos enviados desde la cola local, subir fotos y guardar su referencia. Agregar timestamps y usuario creador. Incluir reglas basicas de seguridad. No implementar SaaS multiempresa, dashboards avanzados, WhatsApp ni Excel todavia.
+
+CRITERIO DE CIERRE
+- Compila sin errores criticos.
+- La funcion principal puede probarse.
+- Hay commit de GitHub.
+- No se agregaron funciones fuera del alcance.

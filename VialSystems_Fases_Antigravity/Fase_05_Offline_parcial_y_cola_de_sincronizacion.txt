@@ -1,0 +1,25 @@
+VialSystems - Fase 05 - Offline parcial y cola de sincronizacion
+
+OBJETIVO
+Evitar perdida de informacion cuando el operador no tenga buena conexion.
+
+ENTREGABLES
+- Storage local
+- Cola de pendientes
+- Estados: borrador, listo, sincronizado, error
+- Reintentos manuales
+- Pantalla de pendientes
+
+NO HACER EN ESTA FASE
+- No crear logica de conflicto avanzada
+- No crear replicacion compleja
+- No optimizar prematuramente
+
+PROMPT PARA ANTIGRAVITY
+Implementa offline parcial para VialSystems. Los formularios de acarreo y sus fotos deben guardarse localmente si no hay conexion. Crear una cola de sincronizacion con estados: borrador, listo para enviar, sincronizado y error. Mostrar pantalla de pendientes y permitir reintento manual. Evitar duplicados por numero de guia oficial. No implementes conflictos avanzados ni replicacion compleja.
+
+CRITERIO DE CIERRE
+- Compila sin errores criticos.
+- La funcion principal puede probarse.
+- Hay commit de GitHub.
+- No se agregaron funciones fuera del alcance.

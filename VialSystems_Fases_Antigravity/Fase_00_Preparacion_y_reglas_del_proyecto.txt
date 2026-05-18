@@ -1,0 +1,26 @@
+VialSystems - Fase 00 - Preparacion y reglas del proyecto
+
+OBJETIVO
+Crear una base limpia para que Antigravity trabaje sin mezclar objetivos.
+
+ENTREGABLES
+- Repositorio inicial en GitHub
+- README del proyecto
+- Convenciones de nombres
+- Estructura de carpetas base
+- Lista de modulos permitidos y no permitidos en esta etapa
+
+NO HACER EN ESTA FASE
+- No crear todos los formularios todavia
+- No agregar dashboard web todavia
+- No implementar notificaciones todavia
+- No crear microservicios
+
+PROMPT PARA ANTIGRAVITY
+Actua como arquitecto senior Flutter. Crea solamente la base inicial del proyecto VialSystems para Android. Debe incluir estructura limpia de carpetas, README, convenciones de nombres y pantalla inicial placeholder. No implementes formularios, dashboard web, PDFs, notificaciones, IA, GPS ni sincronizacion avanzada. El objetivo es dejar una base estable para trabajar por fases.
+
+CRITERIO DE CIERRE
+- Compila sin errores criticos.
+- La funcion principal puede probarse.
+- Hay commit de GitHub.
+- No se agregaron funciones fuera del alcance.

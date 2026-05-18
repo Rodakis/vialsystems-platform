@@ -1,0 +1,26 @@
+VialSystems - Fase 07 - Panel web administrativo inicial
+
+OBJETIVO
+Crear el control de oficina minimo para revisar informacion enviada desde campo.
+
+ENTREGABLES
+- Login web simple
+- Dashboard operacional inicial
+- Lista de remitos
+- Filtros por obra, fecha, material, transportista
+- Detalle de remito con fotos
+- Historial documental
+
+NO HACER EN ESTA FASE
+- No crear analytics avanzados
+- No crear SaaS multiempresa
+- No crear integracion Excel todavia
+
+PROMPT PARA ANTIGRAVITY
+Implementa el panel web administrativo inicial para VialSystems. Debe permitir login simple, ver dashboard operacional basico, listar remitos enviados, filtrar por obra, fecha, material y transportista, abrir detalle del remito y ver fotos asociadas. Separar vista oficina/admin. No implementar analytics avanzados, SaaS multiempresa ni integracion Excel todavia.
+
+CRITERIO DE CIERRE
+- Compila sin errores criticos.
+- La funcion principal puede probarse.
+- Hay commit de GitHub.
+- No se agregaron funciones fuera del alcance.

@@ -1,0 +1,26 @@
+VialSystems - Fase 02 - Gestion base de obras y catalogos
+
+OBJETIVO
+Crear las listas compartidas que seran usadas por todos los formularios.
+
+ENTREGABLES
+- CRUD simple de obras
+- Catalogo de materiales
+- Catalogo de transportistas
+- Catalogo de choferes/camiones
+- Catalogo de recibidores
+- Estado de obra: activa/cerrada
+
+NO HACER EN ESTA FASE
+- No crear reportes aun
+- No crear costos complejos por obra aun
+- No conectar integraciones externas
+
+PROMPT PARA ANTIGRAVITY
+Implementa la gestion base de obras y catalogos compartidos para VialSystems. Crear modelos y pantallas simples para Obras, Materiales, Transportistas, Choferes, Camiones y Recibidores. Las obras deben poder estar activas o cerradas. Los catalogos deben estar disponibles para los formularios y permitir agregar nuevas opciones. No implementes reportes, costos avanzados ni integraciones externas.
+
+CRITERIO DE CIERRE
+- Compila sin errores criticos.
+- La funcion principal puede probarse.
+- Hay commit de GitHub.
+- No se agregaron funciones fuera del alcance.

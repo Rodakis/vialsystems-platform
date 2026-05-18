@@ -1,0 +1,25 @@
+VialSystems - Fase 11 - Retencion, backups y preparacion para escalar
+
+OBJETIVO
+Cerrar el MVP profesional con bases sanas para mantenimiento y crecimiento.
+
+ENTREGABLES
+- Politica de retencion documentada
+- Backups automaticos
+- Compresion futura
+- Checklist de produccion
+- Roadmap post-MVP
+
+NO HACER EN ESTA FASE
+- No implementar SaaS multiempresa aun
+- No implementar IA avanzada aun
+- No implementar integraciones externas sin estabilidad
+
+PROMPT PARA ANTIGRAVITY
+Prepara VialSystems para cierre de MVP profesional. Documenta politica de retencion: 12 meses almacenamiento normal, 6 meses comprimido y eliminacion programada posterior. Configura backups iniciales, checklist de QA y roadmap post-MVP. No implementar SaaS multiempresa, IA avanzada, WhatsApp, Excel ni APIs externas hasta que el MVP este estable.
+
+CRITERIO DE CIERRE
+- Compila sin errores criticos.
+- La funcion principal puede probarse.
+- Hay commit de GitHub.
+- No se agregaron funciones fuera del alcance.

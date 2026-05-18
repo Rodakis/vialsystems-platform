@@ -1,0 +1,25 @@
+VialSystems - Fase 01 - Autenticacion y roles basicos
+
+OBJETIVO
+Permitir login individual y preparar control por usuario sin complejidad excesiva.
+
+ENTREGABLES
+- Pantalla de login
+- Modelo User
+- Roles basicos: operador, oficina, administrador
+- Sesion local simple
+- Validacion de usuario y password
+
+NO HACER EN ESTA FASE
+- No implementar permisos empresariales complejos
+- No crear multiempresa todavia
+- No integrar SSO ni MFA en esta etapa
+
+PROMPT PARA ANTIGRAVITY
+Implementa en VialSystems un modulo de autenticacion basico con login individual por usuario y password. Crea modelos simples de usuario y roles: operador, oficina y administrador. Guarda la sesion localmente para pruebas. No implementes multiempresa, SSO, MFA ni permisos complejos. Mantener codigo modular y facil de reemplazar luego por Supabase o Firebase.
+
+CRITERIO DE CIERRE
+- Compila sin errores criticos.
+- La funcion principal puede probarse.
+- Hay commit de GitHub.
+- No se agregaron funciones fuera del alcance.
