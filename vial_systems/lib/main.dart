@@ -8,6 +8,9 @@ import 'features/home/presentation/screens/home_screen.dart';
 import 'features/catalogs/data/repositories/local_catalog_repository.dart';
 import 'core/providers/catalog_provider.dart';
 
+import 'features/remito/data/repositories/local_remito_repository.dart';
+import 'core/providers/remito_provider.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
@@ -18,6 +21,9 @@ void main() {
         ),
         ChangeNotifierProvider(
           create: (_) => CatalogProvider(LocalCatalogRepository()),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => RemitoProvider(LocalRemitoRepository()),
         ),
       ],
       child: const VialSystemsApp(),

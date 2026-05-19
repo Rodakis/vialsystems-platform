@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../catalogs/presentation/screens/catalogs_screen.dart';
+import '../../../remito/presentation/screens/remito_list_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -32,7 +33,7 @@ class HomeScreen extends StatelessWidget {
             const Icon(Icons.construction, size: 80, color: Colors.blueAccent),
             const SizedBox(height: 16),
             const Text(
-              'VialSystems - Fase 02',
+              'VialSystems - Fase 03',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
@@ -42,6 +43,17 @@ class HomeScreen extends StatelessWidget {
               Text('Email: ${user.email}', style: const TextStyle(color: Colors.grey)),
             ],
             const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const RemitoListScreen()),
+                );
+              },
+              icon: const Icon(Icons.local_shipping),
+              label: const Text('Informes de Acarreo (Remitos)'),
+            ),
+            const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.push(
