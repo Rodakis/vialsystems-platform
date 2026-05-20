@@ -19,6 +19,7 @@ class RemitoModel {
   final DateTime horaDescarga;
   final String observaciones;
   final RemitoStatus estado;
+  final List<String> fotos;
 
   RemitoModel({
     required this.id,
@@ -36,6 +37,7 @@ class RemitoModel {
     required this.horaDescarga,
     required this.observaciones,
     required this.estado,
+    this.fotos = const [],
   });
 
   factory RemitoModel.fromJson(Map<String, dynamic> json) {
@@ -55,6 +57,7 @@ class RemitoModel {
       horaDescarga: DateTime.parse(json['horaDescarga'] as String),
       observaciones: json['observaciones'] as String,
       estado: RemitoStatus.values.firstWhere((e) => e.name == json['estado'], orElse: () => RemitoStatus.borrador),
+      fotos: (json['fotos'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
     );
   }
 
@@ -75,6 +78,7 @@ class RemitoModel {
       'horaDescarga': horaDescarga.toIso8601String(),
       'observaciones': observaciones,
       'estado': estado.name,
+      'fotos': fotos,
     };
   }
 }

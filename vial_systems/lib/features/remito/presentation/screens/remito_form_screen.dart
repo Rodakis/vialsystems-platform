@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/providers/catalog_provider.dart';
 import '../../../../core/providers/remito_provider.dart';
 import '../../domain/models/remito_model.dart';
@@ -30,6 +32,8 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
   final _acopladoController = TextEditingController();
   late TimeOfDay _horaDescarga;
   final _observacionesController = TextEditingController();
+  List<String> _fotos = [];
+  final _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -49,6 +53,7 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
       _acopladoController.text = r.acopladoPatente;
       _horaDescarga = TimeOfDay.fromDateTime(r.horaDescarga);
       _observacionesController.text = r.observaciones;
+      _fotos = List.from(r.fotos);
     } else {
       _fecha = DateTime.now();
       _horaDescarga = TimeOfDay.now();
@@ -71,6 +76,13 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
       return;
     }
 
+    if (estado == RemitoStatus.enviado && _fotos.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Debe adjuntar al menos 1 foto como evidencia antes de enviar el remito.')),
+      );
+      return;
+    }
+
     final now = DateTime.now();
     final remito = RemitoModel(
       id: widget.remito?.id ?? now.millisecondsSinceEpoch.toString(),
@@ -88,10 +100,29 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
       horaDescarga: DateTime(now.year, now.month, now.day, _horaDescarga.hour, _horaDescarga.minute),
       observaciones: _observacionesController.text.trim(),
       estado: estado,
+      fotos: _fotos,
     );
 
     context.read<RemitoProvider>().saveRemito(remito);
     Navigator.pop(context);
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final pickedFile = await _imagePicker.pickImage(
+      source: source,
+      imageQuality: 70,
+    );
+    if (pickedFile != null) {
+      setState(() {
+        _fotos.add(pickedFile.path);
+      });
+    }
+  }
+
+  void _removePhoto(int index) {
+    setState(() {
+      _fotos.removeAt(index);
+    });
   }
 
   Future<void> _selectDate() async {
@@ -238,6 +269,69 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
                 maxLines: 3,
                 readOnly: isReadOnly,
               ),
+              const SizedBox(height: 16),
+              
+              // Evidencia fotografica
+              const Text('Evidencia Fotográfica *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 8),
+              if (_fotos.isNotEmpty)
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  children: List.generate(_fotos.length, (index) {
+                    final isLocal = !_fotos[index].startsWith('http');
+                    return Stack(
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: isLocal
+                                ? Image.file(File(_fotos[index]), fit: BoxFit.cover)
+                                : Image.network(_fotos[index], fit: BoxFit.cover),
+                          ),
+                        ),
+                        if (!isReadOnly)
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: () => _removePhoto(index),
+                              child: Container(
+                                color: Colors.black54,
+                                child: const Icon(Icons.close, color: Colors.white, size: 20),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  }),
+                ),
+              if (_fotos.isEmpty && isReadOnly)
+                const Text('No hay fotos adjuntas.'),
+              if (!isReadOnly) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => _pickImage(ImageSource.camera),
+                      icon: const Icon(Icons.camera_alt),
+                      label: const Text('Tomar Foto'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: () => _pickImage(ImageSource.gallery),
+                      icon: const Icon(Icons.photo_library),
+                      label: const Text('Galería'),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 32),
 
               if (!isReadOnly) ...[
