@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'core/providers/auth_provider.dart';
 import 'features/auth/data/repositories/local_auth_repository.dart';
@@ -11,8 +12,13 @@ import 'core/providers/catalog_provider.dart';
 import 'features/remito/data/repositories/local_remito_repository.dart';
 import 'core/providers/remito_provider.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://ddhhengtjymwqwlhwffd.supabase.co',
+    anonKey: 'sb_publishable_xqcDjjjo7w8CcOPCxXokAQ_S7raklvx',
+  );
   runApp(
     MultiProvider(
       providers: [

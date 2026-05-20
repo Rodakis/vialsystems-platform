@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../features/remito/domain/models/remito_model.dart';
 import '../../features/remito/domain/repositories/remito_repository.dart';
 
@@ -43,48 +47,111 @@ class RemitoProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
+    final supabase = Supabase.instance.client;
+
     for (var r in _remitos) {
       if (r.estado == RemitoStatus.listoParaEnviar || r.estado == RemitoStatus.error) {
-        // Simular envio por red
-        await Future.delayed(const Duration(seconds: 1));
-        // Simular exito (80% prob) o fallo (20% prob)
-        final isSuccess = DateTime.now().millisecond % 5 != 0;
-        
-        String? finalNumeroRemito = r.numeroRemito;
-        if (isSuccess && finalNumeroRemito == null) {
-          int maxNum = 0;
-          for (var existing in _remitos) {
-            if (existing.numeroRemito != null && existing.numeroRemito!.startsWith('R-')) {
-              final numStr = existing.numeroRemito!.substring(2);
-              final numVal = int.tryParse(numStr);
-              if (numVal != null && numVal > maxNum) {
-                maxNum = numVal;
-              }
-            }
+        try {
+          String validId = r.id;
+          bool idChanged = false;
+          if (!RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', caseSensitive: false).hasMatch(validId)) {
+            validId = const Uuid().v4();
+            idChanged = true;
           }
-          finalNumeroRemito = 'R-${(maxNum + 1).toString().padLeft(5, '0')}';
+
+          List<String> uploadedFotos = [];
+          
+          for (String fotoPath in r.fotos) {
+            if (fotoPath.startsWith('http') && !fotoPath.startsWith('blob:')) {
+              uploadedFotos.add(fotoPath);
+              continue;
+            }
+            
+            if (kIsWeb) {
+              uploadedFotos.add(fotoPath);
+              continue;
+            }
+            
+            final fileName = '${validId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+            final file = File(fotoPath);
+            await supabase.storage.from('fotos_remitos').upload(fileName, file);
+            final publicUrl = supabase.storage.from('fotos_remitos').getPublicUrl(fileName);
+            uploadedFotos.add(publicUrl);
+          }
+          
+          final insertData = {
+            'id': validId,
+            'fecha': r.fecha.toIso8601String(),
+            'numero_guia': r.numeroGuia,
+            'obra_id': r.obraId,
+            'procedencia': r.procedencia,
+            'destino': r.destino,
+            'material_id': r.materialId,
+            'cantidad_m3': r.cantidadM3,
+            'transportista_id': r.transportistaId,
+            'chofer_id': r.choferId,
+            'camion_patente': r.camionPatente,
+            'acoplado_patente': r.acopladoPatente,
+            'hora_descarga': r.horaDescarga.toIso8601String(),
+            'observaciones': r.observaciones,
+            'estado': 'sincronizado',
+            'fotos': uploadedFotos,
+          };
+
+          // Usar upsert para evitar errores por duplicado si se reintenta y ya existía
+          final response = await supabase.from('remitos').upsert(insertData).select('numero_remito_seq').single();
+          
+          final seqNum = response['numero_remito_seq'] as int;
+          final finalNumeroRemito = 'R-${seqNum.toString().padLeft(5, '0')}';
+          
+          final updated = RemitoModel(
+            id: validId,
+            fecha: r.fecha,
+            numeroGuia: r.numeroGuia,
+            obraId: r.obraId,
+            procedencia: r.procedencia,
+            destino: r.destino,
+            materialId: r.materialId,
+            cantidadM3: r.cantidadM3,
+            transportistaId: r.transportistaId,
+            choferId: r.choferId,
+            camionPatente: r.camionPatente,
+            acopladoPatente: r.acopladoPatente,
+            horaDescarga: r.horaDescarga,
+            observaciones: r.observaciones,
+            estado: RemitoStatus.sincronizado,
+            fotos: uploadedFotos,
+            numeroRemito: finalNumeroRemito,
+          );
+          
+          if (idChanged) {
+            await _repository.deleteRemito(r.id);
+          }
+          await _repository.saveRemito(updated);
+          
+        } catch (e) {
+          debugPrint('Error sincronizando remito ${r.id}: $e');
+          final updatedError = RemitoModel(
+            id: r.id,
+            fecha: r.fecha,
+            numeroGuia: r.numeroGuia,
+            obraId: r.obraId,
+            procedencia: r.procedencia,
+            destino: r.destino,
+            materialId: r.materialId,
+            cantidadM3: r.cantidadM3,
+            transportistaId: r.transportistaId,
+            choferId: r.choferId,
+            camionPatente: r.camionPatente,
+            acopladoPatente: r.acopladoPatente,
+            horaDescarga: r.horaDescarga,
+            observaciones: r.observaciones,
+            estado: RemitoStatus.error,
+            fotos: r.fotos,
+            numeroRemito: r.numeroRemito,
+          );
+          await _repository.saveRemito(updatedError);
         }
-        
-        final updated = RemitoModel(
-          id: r.id,
-          fecha: r.fecha,
-          numeroGuia: r.numeroGuia,
-          obraId: r.obraId,
-          procedencia: r.procedencia,
-          destino: r.destino,
-          materialId: r.materialId,
-          cantidadM3: r.cantidadM3,
-          transportistaId: r.transportistaId,
-          choferId: r.choferId,
-          camionPatente: r.camionPatente,
-          acopladoPatente: r.acopladoPatente,
-          horaDescarga: r.horaDescarga,
-          observaciones: r.observaciones,
-          estado: isSuccess ? RemitoStatus.sincronizado : RemitoStatus.error,
-          fotos: r.fotos,
-          numeroRemito: finalNumeroRemito,
-        );
-        await _repository.saveRemito(updated);
       }
     }
     await loadRemitos();

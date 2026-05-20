@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
 import '../../../../core/providers/catalog_provider.dart';
 import '../../../../core/providers/remito_provider.dart';
 import '../../domain/models/remito_model.dart';
@@ -86,7 +87,7 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
 
     final now = DateTime.now();
     final remito = RemitoModel(
-      id: widget.remito?.id ?? now.millisecondsSinceEpoch.toString(),
+      id: widget.remito?.id ?? const Uuid().v4(),
       fecha: _fecha,
       numeroGuia: _numeroGuiaController.text.trim(),
       obraId: _selectedObraId,
