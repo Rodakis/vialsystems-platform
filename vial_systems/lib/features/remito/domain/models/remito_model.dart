@@ -1,6 +1,8 @@
 enum RemitoStatus {
   borrador,
-  enviado,
+  listoParaEnviar,
+  sincronizado,
+  error,
 }
 
 class RemitoModel {
@@ -20,6 +22,7 @@ class RemitoModel {
   final String observaciones;
   final RemitoStatus estado;
   final List<String> fotos;
+  final String? numeroRemito;
 
   RemitoModel({
     required this.id,
@@ -38,6 +41,7 @@ class RemitoModel {
     required this.observaciones,
     required this.estado,
     this.fotos = const [],
+    this.numeroRemito,
   });
 
   factory RemitoModel.fromJson(Map<String, dynamic> json) {
@@ -56,8 +60,11 @@ class RemitoModel {
       acopladoPatente: json['acopladoPatente'] as String,
       horaDescarga: DateTime.parse(json['horaDescarga'] as String),
       observaciones: json['observaciones'] as String,
-      estado: RemitoStatus.values.firstWhere((e) => e.name == json['estado'], orElse: () => RemitoStatus.borrador),
+      estado: json['estado'] == 'enviado' 
+          ? RemitoStatus.listoParaEnviar 
+          : RemitoStatus.values.firstWhere((e) => e.name == json['estado'], orElse: () => RemitoStatus.borrador),
       fotos: (json['fotos'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      numeroRemito: json['numeroRemito'] as String?,
     );
   }
 
@@ -79,6 +86,7 @@ class RemitoModel {
       'observaciones': observaciones,
       'estado': estado.name,
       'fotos': fotos,
+      'numeroRemito': numeroRemito,
     };
   }
 }

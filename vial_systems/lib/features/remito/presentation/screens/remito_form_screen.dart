@@ -72,12 +72,12 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
     super.dispose();
   }
 
-  void _saveRemito(RemitoStatus estado) {
-    if (estado == RemitoStatus.enviado && !_formKey.currentState!.validate()) {
+  void _saveRemito(RemitoStatus estado) async {
+    if (estado == RemitoStatus.listoParaEnviar && !_formKey.currentState!.validate()) {
       return;
     }
 
-    if (estado == RemitoStatus.enviado && _fotos.isEmpty) {
+    if (estado == RemitoStatus.listoParaEnviar && _fotos.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Debe adjuntar al menos 1 foto como evidencia antes de enviar el remito.')),
       );
@@ -104,8 +104,16 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
       fotos: _fotos,
     );
 
-    context.read<RemitoProvider>().saveRemito(remito);
-    Navigator.pop(context);
+    try {
+      await context.read<RemitoProvider>().saveRemito(remito);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
+    }
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -146,7 +154,7 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isReadOnly = widget.remito?.estado == RemitoStatus.enviado;
+    final isReadOnly = widget.remito != null && widget.remito!.estado != RemitoStatus.borrador;
     final catalogs = context.watch<CatalogProvider>();
 
     return Scaffold(
@@ -160,6 +168,15 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Numero de Remito
+              TextFormField(
+                initialValue: widget.remito?.numeroRemito ?? 'Pendiente de asignación',
+                decoration: const InputDecoration(labelText: 'Número de Remito (Interno)', border: OutlineInputBorder()),
+                readOnly: true,
+                style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+
               // Fecha
               ListTile(
                 title: const Text('Fecha'),
@@ -349,8 +366,8 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () => _saveRemito(RemitoStatus.enviado),
-                        child: const Text('Enviar Remito'),
+                        onPressed: () => _saveRemito(RemitoStatus.listoParaEnviar),
+                        child: const Text('Guardar y Enviar'),
                       ),
                     ),
                   ],
