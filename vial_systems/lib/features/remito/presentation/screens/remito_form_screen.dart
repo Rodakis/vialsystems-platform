@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -291,9 +292,11 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: isLocal
-                                ? Image.file(File(_fotos[index]), fit: BoxFit.cover)
-                                : Image.network(_fotos[index], fit: BoxFit.cover),
+                            child: kIsWeb
+                                ? Image.network(_fotos[index], fit: BoxFit.cover)
+                                : (isLocal
+                                    ? Image.file(File(_fotos[index]), fit: BoxFit.cover)
+                                    : Image.network(_fotos[index], fit: BoxFit.cover)),
                           ),
                         ),
                         if (!isReadOnly)
