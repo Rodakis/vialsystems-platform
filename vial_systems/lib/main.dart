@@ -5,8 +5,10 @@ import 'core/providers/auth_provider.dart';
 import 'features/auth/data/repositories/local_auth_repository.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/home/presentation/screens/home_screen.dart';
+import 'features/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'features/auth/domain/models/user_model.dart';
 
-import 'features/catalogs/data/repositories/local_catalog_repository.dart';
+import 'features/catalogs/data/repositories/supabase_catalog_repository.dart';
 import 'core/providers/catalog_provider.dart';
 
 import 'features/remito/data/repositories/local_remito_repository.dart';
@@ -26,7 +28,7 @@ Future<void> main() async {
           create: (_) => AuthProvider(LocalAuthRepository()),
         ),
         ChangeNotifierProvider(
-          create: (_) => CatalogProvider(LocalCatalogRepository()),
+          create: (_) => CatalogProvider(SupabaseCatalogRepository()),
         ),
         ChangeNotifierProvider(
           create: (_) => RemitoProvider(LocalRemitoRepository()),
@@ -57,6 +59,9 @@ class VialSystemsApp extends StatelessWidget {
           }
           
           if (authProvider.isAuthenticated) {
+            if (authProvider.currentUser?.role == UserRole.administrador || authProvider.currentUser?.role == UserRole.oficina) {
+              return const AdminDashboardScreen();
+            }
             return const HomeScreen();
           } else {
             return const LoginScreen();

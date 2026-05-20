@@ -199,7 +199,7 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
 
               // Obra
               DropdownButtonFormField<String>(
-                value: _selectedObraId,
+                initialValue: _selectedObraId,
                 decoration: const InputDecoration(labelText: 'Obra', border: OutlineInputBorder()),
                 items: catalogs.obras.where((o) => o.activa).map((o) => DropdownMenuItem(value: o.id, child: Text(o.nombre))).toList(),
                 onChanged: isReadOnly ? null : (val) => setState(() => _selectedObraId = val),
@@ -218,7 +218,7 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
 
               // Material
               DropdownButtonFormField<String>(
-                value: _selectedMaterialId,
+                initialValue: _selectedMaterialId,
                 decoration: const InputDecoration(labelText: 'Material *', border: OutlineInputBorder()),
                 items: catalogs.materiales.map((m) => DropdownMenuItem(value: m.id, child: Text(m.nombre))).toList(),
                 onChanged: isReadOnly ? null : (val) => setState(() => _selectedMaterialId = val),
@@ -238,7 +238,7 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
 
               // Transportista
               DropdownButtonFormField<String>(
-                value: _selectedTransportistaId,
+                initialValue: _selectedTransportistaId,
                 decoration: const InputDecoration(labelText: 'Transportista', border: OutlineInputBorder()),
                 items: catalogs.transportistas.map((t) => DropdownMenuItem(value: t.id, child: Text(t.nombre))).toList(),
                 onChanged: isReadOnly ? null : (val) => setState(() => _selectedTransportistaId = val),
@@ -247,7 +247,7 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
 
               // Chofer
               DropdownButtonFormField<String>(
-                value: _selectedChoferId,
+                initialValue: _selectedChoferId,
                 decoration: const InputDecoration(labelText: 'Chofer', border: OutlineInputBorder()),
                 items: catalogs.choferes.map((c) => DropdownMenuItem(value: c.id, child: Text(c.nombre))).toList(),
                 onChanged: isReadOnly ? null : (val) => setState(() => _selectedChoferId = val),
@@ -256,7 +256,7 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
 
               // Camion Patente
               DropdownButtonFormField<String>(
-                value: _selectedCamionPatente,
+                initialValue: _selectedCamionPatente,
                 decoration: const InputDecoration(labelText: 'Matrícula Camión', border: OutlineInputBorder()),
                 items: catalogs.camiones.map((c) => DropdownMenuItem(value: c.patente, child: Text(c.patente))).toList(),
                 onChanged: isReadOnly ? null : (val) => setState(() => _selectedCamionPatente = val),

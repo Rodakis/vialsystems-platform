@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 import '../../features/catalogs/domain/models/catalog_models.dart';
 import '../../features/catalogs/domain/repositories/catalog_repository.dart';
 
@@ -44,7 +45,7 @@ class CatalogProvider extends ChangeNotifier {
 
   // Obras
   Future<void> addObra(String nombre) async {
-    final obra = ObraModel(id: DateTime.now().millisecondsSinceEpoch.toString(), nombre: nombre);
+    final obra = ObraModel(id: const Uuid().v4(), nombre: nombre);
     await _repository.addObra(obra);
     _obras.add(obra);
     notifyListeners();
@@ -62,7 +63,7 @@ class CatalogProvider extends ChangeNotifier {
 
   // Materiales
   Future<void> addMaterial(String nombre) async {
-    final material = MaterialModel(id: DateTime.now().millisecondsSinceEpoch.toString(), nombre: nombre);
+    final material = MaterialModel(id: const Uuid().v4(), nombre: nombre);
     await _repository.addMaterial(material);
     _materiales.add(material);
     notifyListeners();
@@ -70,7 +71,7 @@ class CatalogProvider extends ChangeNotifier {
 
   // Transportistas
   Future<void> addTransportista(String nombre) async {
-    final transportista = TransportistaModel(id: DateTime.now().millisecondsSinceEpoch.toString(), nombre: nombre);
+    final transportista = TransportistaModel(id: const Uuid().v4(), nombre: nombre);
     await _repository.addTransportista(transportista);
     _transportistas.add(transportista);
     notifyListeners();
@@ -78,7 +79,7 @@ class CatalogProvider extends ChangeNotifier {
 
   // Choferes
   Future<void> addChofer(String nombre) async {
-    final chofer = ChoferModel(id: DateTime.now().millisecondsSinceEpoch.toString(), nombre: nombre);
+    final chofer = ChoferModel(id: const Uuid().v4(), nombre: nombre);
     await _repository.addChofer(chofer);
     _choferes.add(chofer);
     notifyListeners();
@@ -86,7 +87,7 @@ class CatalogProvider extends ChangeNotifier {
 
   // Camiones
   Future<void> addCamion(String patente) async {
-    final camion = CamionModel(id: DateTime.now().millisecondsSinceEpoch.toString(), patente: patente);
+    final camion = CamionModel(id: const Uuid().v4(), patente: patente);
     await _repository.addCamion(camion);
     _camiones.add(camion);
     notifyListeners();
@@ -94,7 +95,7 @@ class CatalogProvider extends ChangeNotifier {
 
   // Recibidores
   Future<void> addRecibidor(String nombre) async {
-    final recibidor = RecibidorModel(id: DateTime.now().millisecondsSinceEpoch.toString(), nombre: nombre);
+    final recibidor = RecibidorModel(id: const Uuid().v4(), nombre: nombre);
     await _repository.addRecibidor(recibidor);
     _recibidores.add(recibidor);
     notifyListeners();

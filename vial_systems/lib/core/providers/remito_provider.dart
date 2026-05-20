@@ -10,6 +10,7 @@ class RemitoProvider extends ChangeNotifier {
   final RemitoRepository _repository;
 
   List<RemitoModel> _remitos = [];
+  List<RemitoModel> _adminRemitos = [];
   bool _isLoading = false;
 
   RemitoProvider(this._repository) {
@@ -17,6 +18,7 @@ class RemitoProvider extends ChangeNotifier {
   }
 
   List<RemitoModel> get remitos => _remitos;
+  List<RemitoModel> get adminRemitos => _adminRemitos;
   bool get isLoading => _isLoading;
 
   Future<void> loadRemitos() async {
@@ -27,6 +29,47 @@ class RemitoProvider extends ChangeNotifier {
     
     // Sort by descending date
     _remitos.sort((a, b) => b.fecha.compareTo(a.fecha));
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> loadAdminRemitos() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await Supabase.instance.client
+          .from('remitos')
+          .select()
+          .order('fecha', ascending: false);
+
+      _adminRemitos = (response as List).map((row) {
+        return RemitoModel(
+          id: row['id'],
+          fecha: DateTime.parse(row['fecha']),
+          numeroGuia: row['numero_guia'],
+          obraId: row['obra_id'],
+          procedencia: row['procedencia'],
+          destino: row['destino'],
+          materialId: row['material_id'],
+          cantidadM3: double.parse(row['cantidad_m3'].toString()),
+          transportistaId: row['transportista_id'],
+          choferId: row['chofer_id'],
+          camionPatente: row['camion_patente'],
+          acopladoPatente: row['acoplado_patente'],
+          horaDescarga: DateTime.parse(row['hora_descarga']),
+          observaciones: row['observaciones'] ?? '',
+          estado: RemitoStatus.sincronizado,
+          fotos: (row['fotos'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+          numeroRemito: row['numero_remito_seq'] != null 
+              ? 'R-${row['numero_remito_seq'].toString().padLeft(5, '0')}' 
+              : null,
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('Error fetching admin remitos: $e');
+    }
 
     _isLoading = false;
     notifyListeners();

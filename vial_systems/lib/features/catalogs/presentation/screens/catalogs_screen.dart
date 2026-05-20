@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/providers/catalog_provider.dart';
+import '../../../auth/domain/models/user_model.dart';
 import '../../domain/models/catalog_models.dart';
 
 class CatalogsScreen extends StatelessWidget {
@@ -8,6 +10,9 @@ class CatalogsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final isAdmin = authProvider.currentUser?.role == UserRole.administrador;
+
     return DefaultTabController(
       length: 6,
       child: Scaffold(
@@ -33,13 +38,14 @@ class CatalogsScreen extends StatelessWidget {
 
             return TabBarView(
               children: [
-                _buildObrasTab(context, provider),
+                _buildObrasTab(context, provider, isAdmin),
                 _buildGenericTab<MaterialModel>(
                   context,
                   title: 'Material',
                   items: provider.materiales,
                   getTitle: (m) => m.nombre,
                   onAdd: (val) => provider.addMaterial(val),
+                  isAdmin: isAdmin,
                 ),
                 _buildGenericTab<TransportistaModel>(
                   context,
@@ -47,6 +53,7 @@ class CatalogsScreen extends StatelessWidget {
                   items: provider.transportistas,
                   getTitle: (t) => t.nombre,
                   onAdd: (val) => provider.addTransportista(val),
+                  isAdmin: isAdmin,
                 ),
                 _buildGenericTab<ChoferModel>(
                   context,
@@ -54,6 +61,7 @@ class CatalogsScreen extends StatelessWidget {
                   items: provider.choferes,
                   getTitle: (c) => c.nombre,
                   onAdd: (val) => provider.addChofer(val),
+                  isAdmin: isAdmin,
                 ),
                 _buildGenericTab<CamionModel>(
                   context,
@@ -61,6 +69,7 @@ class CatalogsScreen extends StatelessWidget {
                   items: provider.camiones,
                   getTitle: (c) => c.patente,
                   onAdd: (val) => provider.addCamion(val),
+                  isAdmin: isAdmin,
                 ),
                 _buildGenericTab<RecibidorModel>(
                   context,
@@ -68,6 +77,7 @@ class CatalogsScreen extends StatelessWidget {
                   items: provider.recibidores,
                   getTitle: (r) => r.nombre,
                   onAdd: (val) => provider.addRecibidor(val),
+                  isAdmin: isAdmin,
                 ),
               ],
             );
@@ -77,7 +87,7 @@ class CatalogsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildObrasTab(BuildContext context, CatalogProvider provider) {
+  Widget _buildObrasTab(BuildContext context, CatalogProvider provider, bool isAdmin) {
     return Column(
       children: [
         Expanded(
@@ -88,21 +98,37 @@ class CatalogsScreen extends StatelessWidget {
               return ListTile(
                 title: Text(obra.nombre),
                 subtitle: Text(obra.activa ? 'Activa' : 'Cerrada', style: TextStyle(color: obra.activa ? Colors.green : Colors.red)),
-                trailing: Switch(
-                  value: obra.activa,
-                  onChanged: (_) => provider.toggleObraStatus(obra),
-                ),
+                trailing: isAdmin
+                    ? Switch(
+                        value: obra.activa,
+                        onChanged: (val) async {
+                          try {
+                            await provider.toggleObraStatus(obra);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error al actualizar obra: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                      )
+                    : null,
               );
             },
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ElevatedButton(
-            onPressed: () => _showAddDialog(context, 'Obra', (val) => provider.addObra(val)),
-            child: const Text('Agregar Obra'),
+        if (isAdmin)
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: () => _showAddDialog(context, 'Obra', (val) => provider.addObra(val)),
+              child: const Text('Agregar Obra'),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -112,7 +138,8 @@ class CatalogsScreen extends StatelessWidget {
     required String title,
     required List<T> items,
     required String Function(T) getTitle,
-    required Function(String) onAdd,
+    required Future<void> Function(String) onAdd,
+    required bool isAdmin,
   }) {
     return Column(
       children: [
@@ -126,18 +153,19 @@ class CatalogsScreen extends StatelessWidget {
             },
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ElevatedButton(
-            onPressed: () => _showAddDialog(context, title, onAdd),
-            child: Text('Agregar $title'),
+        if (isAdmin)
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: () => _showAddDialog(context, title, onAdd),
+              child: Text('Agregar $title'),
+            ),
           ),
-        ),
       ],
     );
   }
 
-  void _showAddDialog(BuildContext context, String title, Function(String) onAdd) {
+  void _showAddDialog(BuildContext context, String title, Future<void> Function(String) onAdd) {
     final controller = TextEditingController();
     showDialog(
       context: context,
@@ -155,11 +183,22 @@ class CatalogsScreen extends StatelessWidget {
               child: const Text('Cancelar'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final val = controller.text.trim();
                 if (val.isNotEmpty) {
-                  onAdd(val);
-                  Navigator.pop(context);
+                  try {
+                    await onAdd(val);
+                    if (context.mounted) Navigator.pop(context);
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error al agregar: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
                 }
               },
               child: const Text('Guardar'),
@@ -170,3 +209,4 @@ class CatalogsScreen extends StatelessWidget {
     );
   }
 }
+

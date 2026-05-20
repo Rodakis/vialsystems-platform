@@ -45,23 +45,23 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _onLogin() async {
-    print('Botón INGRESAR presionado');
+    debugPrint('Botón INGRESAR presionado');
     
     if (_formKey.currentState!.validate()) {
-      print('Validación del formulario: OK');
+      debugPrint('Validación del formulario: OK');
       final authProvider = context.read<AuthProvider>();
       
       final email = _emailController.text.trim();
       final password = _passwordController.text;
       
-      print('Intentando login con email: $email');
+      debugPrint('Intentando login con email: $email');
       
       final success = await authProvider.login(email, password);
       
-      print('Resultado del login: success = $success');
+      debugPrint('Resultado del login: success = $success');
 
       if (!success && mounted) {
-        print('Mostrando SnackBar de error: ${authProvider.errorMessage}');
+        debugPrint('Mostrando SnackBar de error: ${authProvider.errorMessage}');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(authProvider.errorMessage ?? 'Error al iniciar sesión'),
@@ -71,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } else {
-      print('Validación del formulario: FALLÓ');
+      debugPrint('Validación del formulario: FALLÓ');
     }
   }
 
