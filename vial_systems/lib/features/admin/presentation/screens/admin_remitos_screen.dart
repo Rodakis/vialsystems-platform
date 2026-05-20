@@ -207,22 +207,108 @@ class _AdminRemitosScreenState extends State<AdminRemitosScreen> {
                   const Divider(),
                   const Text('Evidencia Fotográfica:', style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: remito.fotos.map((url) => InkWell(
-                      onTap: () {
-                        // Opcional: Expandir imagen
-                      },
-                      child: Image.network(
-                        url,
-                        width: 150,
-                        height: 150,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 50),
-                      ),
-                    )).toList(),
-                  ),
+                  if (remito.fotos.isEmpty)
+                    const Text('No hay evidencias fotográficas registradas.', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey))
+                  else
+                    Column(
+                      children: remito.fotos.map((foto) {
+                        final dateStr = '${foto.fecha.day.toString().padLeft(2, '0')}/${foto.fecha.month.toString().padLeft(2, '0')} ${foto.fecha.hour.toString().padLeft(2, '0')}:${foto.fecha.minute.toString().padLeft(2, '0')}';
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Thumbnail con click para expandir
+                                InkWell(
+                                  onTap: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => Dialog(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Image.network(
+                                              foto.path,
+                                              fit: BoxFit.contain,
+                                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 100),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.all(12.0),
+                                              child: Text(
+                                                '${foto.tipoEvidencia} - Capturado por: ${foto.usuario} ($dateStr)',
+                                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    width: 100,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: Colors.grey.shade300),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        foto.path,
+                                        width: 100,
+                                        height: 100,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 40),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                // Metadata
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.shade50,
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(color: Colors.blue.shade200),
+                                        ),
+                                        child: Text(
+                                          foto.tipoEvidencia,
+                                          style: TextStyle(
+                                            color: Colors.blue.shade800,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Usuario: ${foto.usuario}',
+                                        style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Fecha: $dateStr',
+                                        style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
                 ],
               ),
             ),

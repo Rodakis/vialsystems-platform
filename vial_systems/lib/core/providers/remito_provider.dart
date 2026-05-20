@@ -61,7 +61,7 @@ class RemitoProvider extends ChangeNotifier {
           horaDescarga: DateTime.parse(row['hora_descarga']),
           observaciones: row['observaciones'] ?? '',
           estado: RemitoStatus.sincronizado,
-          fotos: (row['fotos'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+          fotos: (row['fotos'] as List<dynamic>?)?.map((e) => RemitoFotoModel.fromString(e.toString())).toList() ?? [],
           numeroRemito: row['numero_remito_seq'] != null 
               ? 'R-${row['numero_remito_seq'].toString().padLeft(5, '0')}' 
               : null,
@@ -102,24 +102,30 @@ class RemitoProvider extends ChangeNotifier {
             idChanged = true;
           }
 
-          List<String> uploadedFotos = [];
+          List<RemitoFotoModel> uploadedFotos = [];
           
-          for (String fotoPath in r.fotos) {
-            if (fotoPath.startsWith('http') && !fotoPath.startsWith('blob:')) {
-              uploadedFotos.add(fotoPath);
+          for (var foto in r.fotos) {
+            if (foto.path.startsWith('http') && !foto.path.startsWith('blob:')) {
+              uploadedFotos.add(foto);
               continue;
             }
             
             if (kIsWeb) {
-              uploadedFotos.add(fotoPath);
+              uploadedFotos.add(foto);
               continue;
             }
             
             final fileName = '${validId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-            final file = File(fotoPath);
+            final file = File(foto.path);
             await supabase.storage.from('fotos_remitos').upload(fileName, file);
             final publicUrl = supabase.storage.from('fotos_remitos').getPublicUrl(fileName);
-            uploadedFotos.add(publicUrl);
+            
+            uploadedFotos.add(RemitoFotoModel(
+              path: publicUrl,
+              fecha: foto.fecha,
+              usuario: foto.usuario,
+              tipoEvidencia: foto.tipoEvidencia,
+            ));
           }
           
           final insertData = {
@@ -138,7 +144,7 @@ class RemitoProvider extends ChangeNotifier {
             'hora_descarga': r.horaDescarga.toIso8601String(),
             'observaciones': r.observaciones,
             'estado': 'sincronizado',
-            'fotos': uploadedFotos,
+            'fotos': uploadedFotos.map((f) => f.toString()).toList(),
           };
 
           // Usar upsert para evitar errores por duplicado si se reintenta y ya existía

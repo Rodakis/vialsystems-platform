@@ -1,8 +1,62 @@
+import 'dart:convert';
+
 enum RemitoStatus {
   borrador,
   listoParaEnviar,
   sincronizado,
   error,
+}
+
+class RemitoFotoModel {
+  final String path;
+  final DateTime fecha;
+  final String usuario;
+  final String tipoEvidencia;
+
+  RemitoFotoModel({
+    required this.path,
+    required this.fecha,
+    required this.usuario,
+    required this.tipoEvidencia,
+  });
+
+  factory RemitoFotoModel.fromJson(Map<String, dynamic> json) {
+    return RemitoFotoModel(
+      path: json['path'] as String,
+      fecha: DateTime.parse(json['fecha'] as String),
+      usuario: json['usuario'] as String,
+      tipoEvidencia: json['tipoEvidencia'] as String? ?? 'General',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'path': path,
+      'fecha': fecha.toIso8601String(),
+      'usuario': usuario,
+      'tipoEvidencia': tipoEvidencia,
+    };
+  }
+
+  factory RemitoFotoModel.fromString(String value) {
+    try {
+      final decoded = jsonDecode(value);
+      if (decoded is Map<String, dynamic>) {
+        return RemitoFotoModel.fromJson(decoded);
+      }
+    } catch (_) {}
+    return RemitoFotoModel(
+      path: value,
+      fecha: DateTime.now(),
+      usuario: 'Desconocido',
+      tipoEvidencia: 'General',
+    );
+  }
+
+  @override
+  String toString() {
+    return jsonEncode(toJson());
+  }
 }
 
 class RemitoModel {
@@ -21,7 +75,7 @@ class RemitoModel {
   final DateTime horaDescarga;
   final String observaciones;
   final RemitoStatus estado;
-  final List<String> fotos;
+  final List<RemitoFotoModel> fotos;
   final String? numeroRemito;
 
   RemitoModel({
@@ -63,7 +117,7 @@ class RemitoModel {
       estado: json['estado'] == 'enviado' 
           ? RemitoStatus.listoParaEnviar 
           : RemitoStatus.values.firstWhere((e) => e.name == json['estado'], orElse: () => RemitoStatus.borrador),
-      fotos: (json['fotos'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      fotos: (json['fotos'] as List<dynamic>?)?.map((e) => RemitoFotoModel.fromString(e.toString())).toList() ?? [],
       numeroRemito: json['numeroRemito'] as String?,
     );
   }
@@ -85,7 +139,7 @@ class RemitoModel {
       'horaDescarga': horaDescarga.toIso8601String(),
       'observaciones': observaciones,
       'estado': estado.name,
-      'fotos': fotos,
+      'fotos': fotos.map((f) => f.toString()).toList(),
       'numeroRemito': numeroRemito,
     };
   }
