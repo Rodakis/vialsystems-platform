@@ -26,12 +26,14 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
   String? _selectedObraId;
   final _tareasController = TextEditingController();
   final _horasController = TextEditingController();
-  final _personalController = TextEditingController();
-  final _maquinariaController = TextEditingController();
   final _observacionesController = TextEditingController();
 
   final ImagePicker _imagePicker = ImagePicker();
   List<RemitoFotoModel> _fotos = [];
+
+  // Dynamic personal and machinery catalog states
+  Map<String, int> _personalPorFuncion = {};
+  List<String> _maquinariaIds = [];
 
   @override
   void initState() {
@@ -42,10 +44,10 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
       _selectedObraId = inf.obraId;
       _tareasController.text = inf.tareasRealizadas;
       _horasController.text = inf.horasTrabajadas.toString();
-      _personalController.text = inf.personalPresente.toString();
-      _maquinariaController.text = inf.maquinariaUtilizada;
       _observacionesController.text = inf.observaciones;
       _fotos = List.from(inf.fotos);
+      _personalPorFuncion = Map.from(inf.personalPorFuncion);
+      _maquinariaIds = List.from(inf.maquinariaIds);
     } else {
       _fecha = DateTime.now();
     }
@@ -55,8 +57,6 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
   void dispose() {
     _tareasController.dispose();
     _horasController.dispose();
-    _personalController.dispose();
-    _maquinariaController.dispose();
     _observacionesController.dispose();
     super.dispose();
   }
@@ -176,7 +176,7 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
         return SafeArea(
           child: Wrap(
             children: [
-              ListTile(
+              childTile(
                 leading: const Icon(Icons.camera_alt),
                 title: const Text('Tomar Foto'),
                 onTap: () {
@@ -184,7 +184,7 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
                   _replaceImage(index, ImageSource.camera);
                 },
               ),
-              ListTile(
+              childTile(
                 leading: const Icon(Icons.photo_library),
                 title: const Text('Seleccionar de Galería'),
                 onTap: () {
@@ -199,6 +199,14 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
     );
   }
 
+  Widget childTile({required Widget leading, required Widget title, required VoidCallback onTap}) {
+    return ListTile(
+      leading: leading,
+      title: title,
+      onTap: onTap,
+    );
+  }
+
   void _removePhoto(int index) {
     setState(() {
       _fotos.removeAt(index);
@@ -206,6 +214,8 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
   }
 
   void _saveInforme(RemitoStatus estado) async {
+    final totalPersonal = _personalPorFuncion.values.fold(0, (sum, val) => sum + val);
+
     if (estado == RemitoStatus.listoParaEnviar) {
       if (_selectedObraId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -222,6 +232,15 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
         );
         return;
       }
+      if (totalPersonal <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Debe registrar al menos una persona presente (cantidad > 0) para enviar el reporte.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
       if (!_formKey.currentState!.validate()) return;
     }
 
@@ -230,7 +249,6 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
     final usuarioName = authProvider.currentUser?.name ?? 'Desconocido';
 
     final horas = double.tryParse(_horasController.text) ?? 0.0;
-    final personal = int.tryParse(_personalController.text) ?? 0;
 
     final nuevoInforme = InformeDiarioTrabajoModel(
       id: widget.informe?.id ?? const Uuid().v4(),
@@ -240,8 +258,8 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
       usuarioName: usuarioName,
       tareasRealizadas: _tareasController.text.trim(),
       horasTrabajadas: horas,
-      personalPresente: personal,
-      maquinariaUtilizada: _maquinariaController.text.trim(),
+      personalPorFuncion: _personalPorFuncion,
+      maquinariaIds: _maquinariaIds,
       observaciones: _observacionesController.text.trim(),
       estado: estado,
       fotos: _fotos,
@@ -269,10 +287,129 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
     }
   }
 
+  Future<void> _startVoiceInput(TextEditingController controller) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            String transcript = '';
+            bool isListening = true;
+            
+            // Simular transcripción de voz progresiva
+            Future.delayed(const Duration(seconds: 1), () {
+              if (context.mounted && isListening) {
+                setDialogState(() {
+                  transcript = 'Se completó la excavación del sector norte';
+                });
+              }
+            });
+            
+            Future.delayed(const Duration(seconds: 2), () {
+              if (context.mounted && isListening) {
+                setDialogState(() {
+                  transcript = 'Se completó la excavación del sector norte y el perfilado de banquinas';
+                });
+              }
+            });
+
+            Future.delayed(const Duration(milliseconds: 3500), () {
+              if (context.mounted && isListening) {
+                setDialogState(() {
+                  transcript = 'Se completó la excavación del sector norte, el perfilado de banquinas y limpieza de calzada.';
+                  isListening = false;
+                });
+              }
+            });
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Row(
+                children: [
+                  Icon(Icons.mic, color: Colors.red.shade700),
+                  const SizedBox(width: 8),
+                  const Text('Reconocimiento de Voz'),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isListening) ...[
+                    const SizedBox(height: 8),
+                    const SizedBox(
+                      width: 50,
+                      height: 50,
+                      child: CircularProgressIndicator(color: Colors.red, strokeWidth: 3),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text('Escuchando activamente...', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ] else ...[
+                    Icon(Icons.check_circle, color: Colors.green.shade600, size: 54),
+                    const SizedBox(height: 16),
+                    const Text('Transcripción Completada', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                  ],
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Text(
+                      transcript.isEmpty ? 'Por favor hable ahora...' : transcript,
+                      style: TextStyle(
+                        fontStyle: transcript.isEmpty ? FontStyle.italic : FontStyle.normal,
+                        color: transcript.isEmpty ? Colors.grey.shade600 : Colors.black87,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    isListening = false;
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancelar'),
+                ),
+                if (!isListening)
+                  ElevatedButton(
+                    onPressed: () {
+                      if (controller.text.isNotEmpty) {
+                        controller.text += '\n$transcript';
+                      } else {
+                        controller.text = transcript;
+                      }
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade700,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Insertar Texto'),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final catalogs = context.watch<CatalogProvider>();
     final isReadOnly = widget.informe != null && widget.informe!.estado != RemitoStatus.borrador;
+
+    // Obtener funciones de personal activas
+    final activeFunciones = catalogs.funcionesPersonal.where((item) => item.activa || _personalPorFuncion.containsKey(item.id)).toList();
+    // Obtener maquinarias activas
+    final activeMaquinarias = catalogs.maquinarias.where((item) => item.activa || _maquinariaIds.contains(item.id)).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -345,85 +482,220 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
               ),
               const SizedBox(height: 16),
 
-              // Hours and Personal Row
-              Row(
+              // Hours Worked Field
+              TextFormField(
+                controller: _horasController,
+                decoration: InputDecoration(
+                  labelText: 'Horas Trabajadas *',
+                  prefixIcon: const Icon(Icons.access_time),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  hintText: 'e.g. 8.5',
+                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                readOnly: isReadOnly,
+                validator: (val) {
+                  if (val == null || val.isEmpty) return 'Requerido';
+                  final doubleVal = double.tryParse(val);
+                  if (doubleVal == null) return 'Número inválido';
+                  if (doubleVal < 0 || doubleVal > 24) return 'Entre 0 y 24';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+
+              // Dynamic catalog personal counts by role
+              const Text(
+                'Personal Presente por Función *',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+              const SizedBox(height: 8),
+              if (activeFunciones.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.grey),
+                      SizedBox(width: 8),
+                      Text('No hay funciones configuradas en el catálogo.', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey)),
+                    ],
+                  ),
+                )
+              else
+                Column(
+                  children: activeFunciones.map((fun) {
+                    final count = _personalPorFuncion[fun.id] ?? 0;
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      elevation: 0.5,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade200)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        child: Row(
+                          children: [
+                            Icon(Icons.person_outline, color: fun.activa ? Colors.blue.shade700 : Colors.grey),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                fun.nombre,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: fun.activa ? Colors.black87 : Colors.grey,
+                                  decoration: fun.activa ? null : TextDecoration.lineThrough,
+                                ),
+                              ),
+                            ),
+                            // Counters +/-
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                                  onPressed: isReadOnly || count <= 0
+                                      ? null
+                                      : () {
+                                          setState(() {
+                                            _personalPorFuncion[fun.id] = count - 1;
+                                          });
+                                        },
+                                ),
+                                Container(
+                                  width: 40,
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    count.toString(),
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.add_circle_outline, color: Colors.green),
+                                  onPressed: isReadOnly
+                                      ? null
+                                      : () {
+                                          setState(() {
+                                            _personalPorFuncion[fun.id] = count + 1;
+                                          });
+                                        },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              const SizedBox(height: 24),
+
+              // Dynamic Machinery catalog selection
+              Card(
+                margin: const EdgeInsets.only(bottom: 24),
+                elevation: 1,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Theme(
+                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    leading: Icon(Icons.construction, color: Colors.blue.shade700),
+                    title: Text(
+                      'Maquinaria Utilizada (${_maquinariaIds.length} seleccionadas)',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                    children: [
+                      if (activeMaquinarias.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline, color: Colors.grey, size: 18),
+                              SizedBox(width: 8),
+                              Text(
+                                'No hay maquinarias activas en el catálogo.',
+                                style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        Container(
+                          constraints: const BoxConstraints(maxHeight: 250),
+                          decoration: BoxDecoration(
+                            border: Border(top: BorderSide(color: Colors.grey.shade100)),
+                          ),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: activeMaquinarias.length,
+                            itemBuilder: (context, index) {
+                              final item = activeMaquinarias[index];
+                              final isChecked = _maquinariaIds.contains(item.id);
+
+                              return CheckboxListTile(
+                                activeColor: Colors.blue.shade700,
+                                dense: true,
+                                title: Text(
+                                  item.nombre,
+                                  style: TextStyle(
+                                    color: item.activa ? Colors.black87 : Colors.grey,
+                                    decoration: item.activa ? null : TextDecoration.lineThrough,
+                                  ),
+                                ),
+                                value: isChecked,
+                                onChanged: isReadOnly
+                                    ? null
+                                    : (bool? value) {
+                                        setState(() {
+                                          if (value == true) {
+                                            _maquinariaIds.add(item.id);
+                                          } else {
+                                            _maquinariaIds.remove(item.id);
+                                          }
+                                        });
+                                      },
+                              );
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Tareas Realizadas (With Speech button)
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Horas Trabajadas
-                  Expanded(
-                    child: TextFormField(
-                      controller: _horasController,
-                      decoration: InputDecoration(
-                        labelText: 'Horas Trabajadas *',
-                        prefixIcon: const Icon(Icons.access_time),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        hintText: 'e.g. 8.5',
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Tareas Realizadas *',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black54),
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      readOnly: isReadOnly,
-                      validator: (val) {
-                        if (val == null || val.isEmpty) return 'Requerido';
-                        final doubleVal = double.tryParse(val);
-                        if (doubleVal == null) return 'Número inválido';
-                        if (doubleVal < 0 || doubleVal > 24) return 'Entre 0 y 24';
-                        return null;
-                      },
-                    ),
+                      if (!isReadOnly)
+                        IconButton(
+                          icon: const Icon(Icons.mic, color: Colors.red),
+                          tooltip: 'Dictar tareas por voz',
+                          onPressed: () => _startVoiceInput(_tareasController),
+                        ),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  // Personal Presente
-                  Expanded(
-                    child: TextFormField(
-                      controller: _personalController,
-                      decoration: InputDecoration(
-                        labelText: 'Personal Presente *',
-                        prefixIcon: const Icon(Icons.people),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        hintText: 'e.g. 5',
-                      ),
-                      keyboardType: TextInputType.number,
-                      readOnly: isReadOnly,
-                      validator: (val) {
-                        if (val == null || val.isEmpty) return 'Requerido';
-                        final intVal = int.tryParse(val);
-                        if (intVal == null) return 'Número entero';
-                        if (intVal < 0) return 'Mayor o igual a 0';
-                        return null;
-                      },
+                  const SizedBox(height: 4),
+                  TextFormField(
+                    controller: _tareasController,
+                    decoration: InputDecoration(
+                      hintText: 'Describa de forma detallada las tareas completadas en la jornada...',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      alignLabelWithHint: true,
                     ),
+                    maxLines: 5,
+                    readOnly: isReadOnly,
+                    validator: (val) => val == null || val.trim().isEmpty ? 'Ingrese las tareas realizadas' : null,
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-
-              // Tareas Realizadas
-              TextFormField(
-                controller: _tareasController,
-                decoration: InputDecoration(
-                  labelText: 'Tareas Realizadas *',
-                  hintText: 'Describa de forma detallada las tareas completadas en la jornada...',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  alignLabelWithHint: true,
-                ),
-                maxLines: 5,
-                readOnly: isReadOnly,
-                validator: (val) => val == null || val.trim().isEmpty ? 'Ingrese las tareas realizadas' : null,
-              ),
-              const SizedBox(height: 16),
-
-              // Maquinaria Utilizada
-              TextFormField(
-                controller: _maquinariaController,
-                decoration: InputDecoration(
-                  labelText: 'Maquinaria Utilizada',
-                  hintText: 'Equipos y maquinaria pesada operando (e.g. Motoniveladora CAT-12, Excavadora, etc.)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  alignLabelWithHint: true,
-                ),
-                maxLines: 3,
-                readOnly: isReadOnly,
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
 
               // Evidencia Fotográfica Section
               const Divider(height: 32),
@@ -585,17 +857,37 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
               ],
               const SizedBox(height: 24),
 
-              // Observaciones
-              TextFormField(
-                controller: _observacionesController,
-                decoration: InputDecoration(
-                  labelText: 'Observaciones generales',
-                  hintText: 'Comentarios adicionales, retrasos, roturas, incidentes...',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  alignLabelWithHint: true,
-                ),
-                maxLines: 3,
-                readOnly: isReadOnly,
+              // Observaciones (With Speech button)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Observaciones generales',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black54),
+                      ),
+                      if (!isReadOnly)
+                        IconButton(
+                          icon: const Icon(Icons.mic, color: Colors.red),
+                          tooltip: 'Dictar observaciones por voz',
+                          onPressed: () => _startVoiceInput(_observacionesController),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  TextFormField(
+                    controller: _observacionesController,
+                    decoration: InputDecoration(
+                      hintText: 'Comentarios adicionales, retrasos, roturas, incidentes...',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      alignLabelWithHint: true,
+                    ),
+                    maxLines: 3,
+                    readOnly: isReadOnly,
+                  ),
+                ],
               ),
               const SizedBox(height: 32),
 

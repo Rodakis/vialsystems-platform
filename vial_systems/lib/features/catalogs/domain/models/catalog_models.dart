@@ -75,3 +75,32 @@ class RecibidorModel {
   factory RecibidorModel.fromJson(Map<String, dynamic> json) => RecibidorModel(id: json['id'] as String, nombre: json['nombre'] as String);
   Map<String, dynamic> toJson() => {'id': id, 'nombre': nombre};
 }
+
+class OperativeCatalogItem {
+  final String id;
+  final String nombre;
+  final bool activa;
+
+  OperativeCatalogItem({
+    required this.id,
+    required this.nombre,
+    this.activa = true,
+  });
+
+  factory OperativeCatalogItem.fromJson(Map<String, dynamic> json) {
+    return OperativeCatalogItem(
+      id: json['id'] as String,
+      nombre: json['nombre'] as String,
+      activa: json['activa'] as bool? ?? json['active'] as bool? ?? true,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'nombre': nombre,
+      'activa': activa,
+    };
+  }
+}
+

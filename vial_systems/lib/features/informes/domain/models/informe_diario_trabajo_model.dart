@@ -8,8 +8,8 @@ class InformeDiarioTrabajoModel {
   final String usuarioName;
   final String tareasRealizadas;
   final double horasTrabajadas;
-  final int personalPresente;
-  final String maquinariaUtilizada;
+  final Map<String, int> personalPorFuncion;
+  final List<String> maquinariaIds;
   final String observaciones;
   final RemitoStatus estado;
   final List<RemitoFotoModel> fotos;
@@ -22,14 +22,22 @@ class InformeDiarioTrabajoModel {
     required this.usuarioName,
     required this.tareasRealizadas,
     required this.horasTrabajadas,
-    required this.personalPresente,
-    required this.maquinariaUtilizada,
+    required this.personalPorFuncion,
+    required this.maquinariaIds,
     required this.observaciones,
     required this.estado,
     required this.fotos,
   });
 
   factory InformeDiarioTrabajoModel.fromJson(Map<String, dynamic> json) {
+    final rawPersonal = json['personalPorFuncion'] ?? json['personal_por_funcion'];
+    final Map<String, int> personalMap = {};
+    if (rawPersonal is Map) {
+      rawPersonal.forEach((key, value) {
+        personalMap[key.toString()] = int.tryParse(value.toString()) ?? 0;
+      });
+    }
+
     return InformeDiarioTrabajoModel(
       id: json['id'] as String,
       fecha: DateTime.parse(json['fecha'] as String),
@@ -38,8 +46,11 @@ class InformeDiarioTrabajoModel {
       usuarioName: json['usuarioName'] as String? ?? 'Desconocido',
       tareasRealizadas: json['tareasRealizadas'] as String? ?? '',
       horasTrabajadas: (json['horasTrabajadas'] as num? ?? 0.0).toDouble(),
-      personalPresente: json['personalPresente'] as int? ?? 0,
-      maquinariaUtilizada: json['maquinariaUtilizada'] as String? ?? '',
+      personalPorFuncion: personalMap,
+      maquinariaIds: (json['maquinariaIds'] ?? json['maquinaria_ids'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       observaciones: json['observaciones'] as String? ?? '',
       estado: RemitoStatus.values.firstWhere(
         (e) => e.name == json['estado'],
@@ -61,8 +72,8 @@ class InformeDiarioTrabajoModel {
       'usuarioName': usuarioName,
       'tareasRealizadas': tareasRealizadas,
       'horasTrabajadas': horasTrabajadas,
-      'personalPresente': personalPresente,
-      'maquinariaUtilizada': maquinariaUtilizada,
+      'personalPorFuncion': personalPorFuncion,
+      'maquinariaIds': maquinariaIds,
       'observaciones': observaciones,
       'estado': estado.name,
       'fotos': fotos.map((f) => f.toString()).toList(),

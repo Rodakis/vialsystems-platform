@@ -6,8 +6,11 @@ class InformeDiarioModel {
   final String? obraId;
   final String usuarioId;
   final String usuarioName;
-  final String clima;
-  final String estadoCamino;
+  final List<String> proveedoresIds;
+  final List<String> maquinariasIds;
+  final List<String> materialesIds;
+  final List<String> equiposIds;
+  final List<String> camionesIds;
   final String observaciones;
   final RemitoStatus estado;
   final List<RemitoFotoModel> fotos;
@@ -18,8 +21,11 @@ class InformeDiarioModel {
     this.obraId,
     required this.usuarioId,
     required this.usuarioName,
-    required this.clima,
-    required this.estadoCamino,
+    required this.proveedoresIds,
+    required this.maquinariasIds,
+    required this.materialesIds,
+    required this.equiposIds,
+    required this.camionesIds,
     required this.observaciones,
     required this.estado,
     required this.fotos,
@@ -32,8 +38,26 @@ class InformeDiarioModel {
       obraId: json['obraId'] as String?,
       usuarioId: json['usuarioId'] as String? ?? '',
       usuarioName: json['usuarioName'] as String? ?? 'Desconocido',
-      clima: json['clima'] as String? ?? 'Soleado',
-      estadoCamino: json['estadoCamino'] as String? ?? 'Transitable',
+      proveedoresIds: (json['proveedoresIds'] ?? json['proveedores_ids'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      maquinariasIds: (json['maquinariasIds'] ?? json['maquinarias_ids'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      materialesIds: (json['materialesIds'] ?? json['materiales_ids'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      equiposIds: (json['equiposIds'] ?? json['equipos_ids'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      camionesIds: (json['camionesIds'] ?? json['camiones_ids'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       observaciones: json['observaciones'] as String? ?? '',
       estado: RemitoStatus.values.firstWhere(
         (e) => e.name == json['estado'],
@@ -53,8 +77,11 @@ class InformeDiarioModel {
       'obraId': obraId,
       'usuarioId': usuarioId,
       'usuarioName': usuarioName,
-      'clima': clima,
-      'estadoCamino': estadoCamino,
+      'proveedoresIds': proveedoresIds,
+      'maquinariasIds': maquinariasIds,
+      'materialesIds': materialesIds,
+      'equiposIds': equiposIds,
+      'camionesIds': camionesIds,
       'observaciones': observaciones,
       'estado': estado.name,
       'fotos': fotos.map((f) => f.toString()).toList(),

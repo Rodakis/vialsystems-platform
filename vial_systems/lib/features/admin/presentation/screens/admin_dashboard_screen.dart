@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
+import '../../../catalogs/presentation/screens/operative_catalogs_screen.dart';
 import 'admin_remitos_screen.dart';
 import 'admin_catalogs_screen.dart';
 import 'admin_informes_screen.dart';
@@ -61,6 +62,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 selectedIcon: Icon(Icons.assignment),
                 label: Text('Partes Diarios'),
               ),
+              NavigationRailDestination(
+                icon: Icon(Icons.settings_suggest),
+                selectedIcon: Icon(Icons.settings_suggest),
+                label: Text('Catálogos Operativos'),
+              ),
             ],
           ),
           const VerticalDivider(thickness: 1, width: 1),
@@ -82,6 +88,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return const AdminCatalogsScreen();
       case 3:
         return const AdminInformesScreen();
+      case 4:
+        return const OperativeCatalogsScreen();
       default:
         return const SizedBox.shrink();
     }

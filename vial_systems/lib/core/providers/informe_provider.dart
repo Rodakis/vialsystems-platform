@@ -63,8 +63,11 @@ class InformeProvider extends ChangeNotifier {
           obraId: row['obra_id'],
           usuarioId: row['usuario_id'] ?? '',
           usuarioName: row['usuario_name'] ?? 'Desconocido',
-          clima: row['clima'] ?? 'Soleado',
-          estadoCamino: row['estado_camino'] ?? 'Transitable',
+          proveedoresIds: (row['proveedores_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+          maquinariasIds: (row['maquinarias_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+          materialesIds: (row['materiales_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+          equiposIds: (row['equipos_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+          camionesIds: (row['camiones_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
           observaciones: row['observaciones'] ?? '',
           estado: RemitoStatus.sincronizado,
           fotos: (row['fotos'] as List<dynamic>?)
@@ -84,6 +87,14 @@ class InformeProvider extends ChangeNotifier {
           .order('fecha', ascending: false);
 
       _adminInformesDiariosTrabajo = (responseTrabajo as List).map((row) {
+        final rawPersonal = row['personal_por_funcion'];
+        final Map<String, int> personalMap = {};
+        if (rawPersonal is Map) {
+          rawPersonal.forEach((key, value) {
+            personalMap[key.toString()] = int.tryParse(value.toString()) ?? 0;
+          });
+        }
+
         return InformeDiarioTrabajoModel(
           id: row['id'],
           fecha: DateTime.parse(row['fecha']),
@@ -92,8 +103,8 @@ class InformeProvider extends ChangeNotifier {
           usuarioName: row['usuario_name'] ?? 'Desconocido',
           tareasRealizadas: row['tareas_realizadas'] ?? '',
           horasTrabajadas: double.parse((row['horas_trabajadas'] ?? 0).toString()),
-          personalPresente: int.parse((row['personal_presente'] ?? 0).toString()),
-          maquinariaUtilizada: row['maquinaria_utilizada'] ?? '',
+          personalPorFuncion: personalMap,
+          maquinariaIds: (row['maquinaria_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
           observaciones: row['observaciones'] ?? '',
           estado: RemitoStatus.sincronizado,
           fotos: (row['fotos'] as List<dynamic>?)
@@ -175,8 +186,11 @@ class InformeProvider extends ChangeNotifier {
             'obra_id': inf.obraId,
             'usuario_id': inf.usuarioId,
             'usuario_name': inf.usuarioName,
-            'clima': inf.clima,
-            'estado_camino': inf.estadoCamino,
+            'proveedores_ids': inf.proveedoresIds,
+            'maquinarias_ids': inf.maquinariasIds,
+            'materiales_ids': inf.materialesIds,
+            'equipos_ids': inf.equiposIds,
+            'camiones_ids': inf.camionesIds,
             'observaciones': inf.observaciones,
             'estado': 'sincronizado',
             'fotos': uploadedFotos.map((f) => f.toString()).toList(),
@@ -190,8 +204,11 @@ class InformeProvider extends ChangeNotifier {
             obraId: inf.obraId,
             usuarioId: inf.usuarioId,
             usuarioName: inf.usuarioName,
-            clima: inf.clima,
-            estadoCamino: inf.estadoCamino,
+            proveedoresIds: inf.proveedoresIds,
+            maquinariasIds: inf.maquinariasIds,
+            materialesIds: inf.materialesIds,
+            equiposIds: inf.equiposIds,
+            camionesIds: inf.camionesIds,
             observaciones: inf.observaciones,
             estado: RemitoStatus.sincronizado,
             fotos: uploadedFotos,
@@ -210,8 +227,11 @@ class InformeProvider extends ChangeNotifier {
             obraId: inf.obraId,
             usuarioId: inf.usuarioId,
             usuarioName: inf.usuarioName,
-            clima: inf.clima,
-            estadoCamino: inf.estadoCamino,
+            proveedoresIds: inf.proveedoresIds,
+            maquinariasIds: inf.maquinariasIds,
+            materialesIds: inf.materialesIds,
+            equiposIds: inf.equiposIds,
+            camionesIds: inf.camionesIds,
             observaciones: inf.observaciones,
             estado: RemitoStatus.error,
             fotos: inf.fotos,
@@ -262,8 +282,8 @@ class InformeProvider extends ChangeNotifier {
             'usuario_name': inf.usuarioName,
             'tareas_realizadas': inf.tareasRealizadas,
             'horas_trabajadas': inf.horasTrabajadas,
-            'personal_presente': inf.personalPresente,
-            'maquinaria_utilizada': inf.maquinariaUtilizada,
+            'personal_por_funcion': inf.personalPorFuncion,
+            'maquinaria_ids': inf.maquinariaIds,
             'observaciones': inf.observaciones,
             'estado': 'sincronizado',
             'fotos': uploadedFotos.map((f) => f.toString()).toList(),
@@ -279,8 +299,8 @@ class InformeProvider extends ChangeNotifier {
             usuarioName: inf.usuarioName,
             tareasRealizadas: inf.tareasRealizadas,
             horasTrabajadas: inf.horasTrabajadas,
-            personalPresente: inf.personalPresente,
-            maquinariaUtilizada: inf.maquinariaUtilizada,
+            personalPorFuncion: inf.personalPorFuncion,
+            maquinariaIds: inf.maquinariaIds,
             observaciones: inf.observaciones,
             estado: RemitoStatus.sincronizado,
             fotos: uploadedFotos,
@@ -301,8 +321,8 @@ class InformeProvider extends ChangeNotifier {
             usuarioName: inf.usuarioName,
             tareasRealizadas: inf.tareasRealizadas,
             horasTrabajadas: inf.horasTrabajadas,
-            personalPresente: inf.personalPresente,
-            maquinariaUtilizada: inf.maquinariaUtilizada,
+            personalPorFuncion: inf.personalPorFuncion,
+            maquinariaIds: inf.maquinariaIds,
             observaciones: inf.observaciones,
             estado: RemitoStatus.error,
             fotos: inf.fotos,

@@ -5,6 +5,7 @@ import '../../../../core/providers/catalog_provider.dart';
 import '../../../../core/providers/informe_provider.dart';
 import '../../../informes/domain/models/informe_diario_model.dart';
 import '../../../informes/domain/models/informe_diario_trabajo_model.dart';
+import '../../../catalogs/domain/models/catalog_models.dart';
 
 class AdminInformesScreen extends StatefulWidget {
   const AdminInformesScreen({super.key});
@@ -101,12 +102,12 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
               indicatorColor: Colors.blueAccent,
               tabs: [
                 Tab(
-                  icon: Icon(Icons.wb_sunny_outlined),
-                  text: 'Informes Diarios (Clima/Acceso)',
+                  icon: Icon(Icons.assignment_outlined),
+                  text: 'Informes Diarios',
                 ),
                 Tab(
                   icon: Icon(Icons.engineering_outlined),
-                  text: 'Diarios de Trabajo (Tareas/Recursos)',
+                  text: 'Diarios de Trabajo',
                 ),
               ],
             ),
@@ -216,36 +217,23 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
               DataColumn(label: Text('Fecha', style: TextStyle(fontWeight: FontWeight.bold))),
               DataColumn(label: Text('Obra', style: TextStyle(fontWeight: FontWeight.bold))),
               DataColumn(label: Text('Operador', style: TextStyle(fontWeight: FontWeight.bold))),
-              DataColumn(label: Text('Clima', style: TextStyle(fontWeight: FontWeight.bold))),
-              DataColumn(label: Text('Camino', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataColumn(label: Text('Observaciones', style: TextStyle(fontWeight: FontWeight.bold))),
             ],
             rows: list.map((inf) {
               final obra = catalogs.obras
                   .firstWhere((o) => o.id == inf.obraId, orElse: () => catalogs.obras.first)
                   .nombre;
               return DataRow(
-                onSelectChanged: (_) => _showDiarioDetailDialog(context, inf, obra),
+                onSelectChanged: (_) => _showDiarioDetailDialog(context, inf, obra, catalogs),
                 cells: [
                   DataCell(Text(DateFormat('dd/MM/yyyy').format(inf.fecha))),
                   DataCell(Text(obra)),
                   DataCell(Text(inf.usuarioName)),
-                  DataCell(Text(inf.clima)),
                   DataCell(
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: _getCaminoColor(inf.estadoCamino).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: _getCaminoColor(inf.estadoCamino).withValues(alpha: 0.5)),
-                      ),
-                      child: Text(
-                        inf.estadoCamino,
-                        style: TextStyle(
-                          color: _getCaminoColor(inf.estadoCamino),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
+                    Text(
+                      inf.observaciones,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -288,14 +276,15 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
               final obra = catalogs.obras
                   .firstWhere((o) => o.id == inf.obraId, orElse: () => catalogs.obras.first)
                   .nombre;
+              final totalPersonal = inf.personalPorFuncion.values.fold(0, (sum, val) => sum + val);
               return DataRow(
-                onSelectChanged: (_) => _showTrabajoDetailDialog(context, inf, obra),
+                onSelectChanged: (_) => _showTrabajoDetailDialog(context, inf, obra, catalogs),
                 cells: [
                   DataCell(Text(DateFormat('dd/MM/yyyy').format(inf.fecha))),
                   DataCell(Text(obra)),
                   DataCell(Text(inf.usuarioName)),
                   DataCell(Text('${inf.horasTrabajadas}h')),
-                  DataCell(Text('${inf.personalPresente} p.')),
+                  DataCell(Text('$totalPersonal p.')),
                   DataCell(
                     Text(
                       inf.tareasRealizadas,
@@ -312,23 +301,17 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
     );
   }
 
-  Color _getCaminoColor(String state) {
-    if (state == 'Transitable') return Colors.green;
-    if (state == 'Transitable con precaución') return Colors.orange;
-    return Colors.red;
-  }
-
-  void _showDiarioDetailDialog(BuildContext context, InformeDiarioModel inf, String obraName) {
+  void _showDiarioDetailDialog(BuildContext context, InformeDiarioModel inf, String obraName, CatalogProvider catalogs) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
-            children: [
-              const Icon(Icons.wb_sunny, color: Colors.orange),
-              const SizedBox(width: 8),
-              const Text('Detalle de Informe Diario'),
+            children: const [
+              Icon(Icons.wb_sunny, color: Colors.orange),
+              SizedBox(width: 8),
+              Text('Detalle de Informe Diario'),
             ],
           ),
           content: SizedBox(
@@ -340,9 +323,20 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
                   _buildDetailRow('Obra:', obraName),
                   _buildDetailRow('Fecha:', DateFormat('dd/MM/yyyy').format(inf.fecha)),
                   _buildDetailRow('Operador:', '${inf.usuarioName} (ID: ${inf.usuarioId})'),
-                  _buildDetailRow('Clima:', inf.clima),
-                  _buildDetailRow('Estado del Camino:', inf.estadoCamino),
                   const SizedBox(height: 12),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Elementos y Equipos Declarados:',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildCatalogSection('Proveedores de Servicio:', inf.proveedoresIds, catalogs.proveedores),
+                  _buildCatalogSection('Maquinaria de Obra:', inf.maquinariasIds, catalogs.maquinarias),
+                  _buildCatalogSection('Control de Materiales:', inf.materialesIds, catalogs.materialesControl),
+                  _buildCatalogSection('Otros Equipos:', inf.equiposIds, catalogs.otrosEquipos),
+                  _buildCatalogSection('Camiones Internos:', inf.camionesIds, catalogs.camionesInternos),
+                  const Divider(),
                   const Text(
                     'Observaciones / Notas:',
                     style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
@@ -491,17 +485,18 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
     );
   }
 
-  void _showTrabajoDetailDialog(BuildContext context, InformeDiarioTrabajoModel inf, String obraName) {
+  void _showTrabajoDetailDialog(BuildContext context, InformeDiarioTrabajoModel inf, String obraName, CatalogProvider catalogs) {
+    final totalPersonal = inf.personalPorFuncion.values.fold(0, (sum, val) => sum + val);
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
-            children: [
-              const Icon(Icons.engineering, color: Colors.blueAccent),
-              const SizedBox(width: 8),
-              const Text('Detalle de Diario de Trabajo'),
+            children: const [
+              Icon(Icons.engineering, color: Colors.blueAccent),
+              SizedBox(width: 8),
+              Text('Detalle de Diario de Trabajo'),
             ],
           ),
           content: SizedBox(
@@ -514,8 +509,16 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
                   _buildDetailRow('Fecha:', DateFormat('dd/MM/yyyy').format(inf.fecha)),
                   _buildDetailRow('Operador:', '${inf.usuarioName} (ID: ${inf.usuarioId})'),
                   _buildDetailRow('Horas Trabajadas:', '${inf.horasTrabajadas} horas'),
-                  _buildDetailRow('Personal Presente:', '${inf.personalPresente} personas'),
+                  _buildDetailRow('Total Personal:', '$totalPersonal personas'),
                   const SizedBox(height: 12),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  const Text('Personal por Función:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+                  const SizedBox(height: 6),
+                  _buildPersonalBreakdown(inf.personalPorFuncion, catalogs.funcionesPersonal),
+                  const SizedBox(height: 12),
+                  _buildCatalogSection('Maquinaria Utilizada:', inf.maquinariaIds, catalogs.maquinarias),
+                  const Divider(),
                   const Text(
                     'Tareas Realizadas:',
                     style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
@@ -530,25 +533,6 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
                       border: Border.all(color: Colors.blue.shade100),
                     ),
                     child: Text(inf.tareasRealizadas, style: const TextStyle(fontSize: 14)),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Maquinaria Utilizada:',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: Text(
-                      inf.maquinariaUtilizada.isNotEmpty ? inf.maquinariaUtilizada : 'Ninguna declarada.',
-                      style: const TextStyle(fontSize: 14),
-                    ),
                   ),
                   const SizedBox(height: 12),
                   const Text(
@@ -696,6 +680,72 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildCatalogSection(String label, List<String> ids, List<OperativeCatalogItem> catalogItems) {
+    final names = ids.map((id) {
+      final item = catalogItems.firstWhere((x) => x.id == id, orElse: () => OperativeCatalogItem(id: id, nombre: 'ID: $id'));
+      return item.nombre;
+    }).toList();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black54)),
+          const SizedBox(height: 4),
+          names.isEmpty
+              ? const Text('Ninguno', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey, fontSize: 13))
+              : Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: names.map((name) => Chip(
+                    label: Text(name, style: const TextStyle(fontSize: 12)),
+                    backgroundColor: Colors.blue.shade50,
+                    side: BorderSide(color: Colors.blue.shade200),
+                    padding: EdgeInsets.zero,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  )).toList(),
+                ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPersonalBreakdown(Map<String, int> personalMap, List<OperativeCatalogItem> catalogItems) {
+    final entries = personalMap.entries.where((e) => e.value > 0).toList();
+    if (entries.isEmpty) {
+      return const Text('Ninguno', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey, fontSize: 13));
+    }
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        children: entries.map((entry) {
+          final item = catalogItems.firstWhere((x) => x.id == entry.key, orElse: () => OperativeCatalogItem(id: entry.key, nombre: 'Función ID: ${entry.key}'));
+          return ListTile(
+            dense: true,
+            title: Text(item.nombre, style: const TextStyle(fontWeight: FontWeight.w500)),
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.blueAccent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${entry.value}',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 

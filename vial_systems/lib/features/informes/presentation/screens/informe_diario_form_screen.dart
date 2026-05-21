@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/providers/catalog_provider.dart';
 import '../../../../core/providers/informe_provider.dart';
+import '../../../../features/catalogs/domain/models/catalog_models.dart';
 import '../../../remito/domain/models/remito_model.dart';
 import '../../domain/models/informe_diario_model.dart';
 
@@ -24,26 +25,17 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
 
   late DateTime _fecha;
   String? _selectedObraId;
-  String _clima = 'Soleado';
-  String _estadoCamino = 'Transitable';
   final _observacionesController = TextEditingController();
 
   final ImagePicker _imagePicker = ImagePicker();
   List<RemitoFotoModel> _fotos = [];
 
-  final List<Map<String, dynamic>> _climaOptions = [
-    {'label': 'Soleado', 'icon': Icons.wb_sunny, 'color': Colors.orange},
-    {'label': 'Nublado', 'icon': Icons.cloud, 'color': Colors.blueGrey},
-    {'label': 'Lluvioso', 'icon': Icons.grain, 'color': Colors.blue},
-    {'label': 'Viento fuerte', 'icon': Icons.air, 'color': Colors.teal},
-    {'label': 'Nieve', 'icon': Icons.ac_unit, 'color': Colors.lightBlueAccent},
-  ];
-
-  final List<Map<String, dynamic>> _caminoOptions = [
-    {'label': 'Transitable', 'icon': Icons.check_circle_outline, 'color': Colors.green},
-    {'label': 'Transitable con precaución', 'icon': Icons.warning_amber_rounded, 'color': Colors.orange},
-    {'label': 'Intransitable', 'icon': Icons.block, 'color': Colors.red},
-  ];
+  // Listas de IDs seleccionados para los 5 catálogos operativos
+  List<String> _proveedoresIds = [];
+  List<String> _maquinariasIds = [];
+  List<String> _materialesIds = [];
+  List<String> _equiposIds = [];
+  List<String> _camionesIds = [];
 
   @override
   void initState() {
@@ -52,10 +44,13 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
       final inf = widget.informe!;
       _fecha = inf.fecha;
       _selectedObraId = inf.obraId;
-      _clima = inf.clima;
-      _estadoCamino = inf.estadoCamino;
       _observacionesController.text = inf.observaciones;
       _fotos = List.from(inf.fotos);
+      _proveedoresIds = List.from(inf.proveedoresIds);
+      _maquinariasIds = List.from(inf.maquinariasIds);
+      _materialesIds = List.from(inf.materialesIds);
+      _equiposIds = List.from(inf.equiposIds);
+      _camionesIds = List.from(inf.camionesIds);
     } else {
       _fecha = DateTime.now();
     }
@@ -80,8 +75,8 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
   }
 
   Future<String?> _showTipoEvidenciaDialog({String? initialValue}) async {
-    String? selectedType = initialValue ?? 'Clima';
-    final types = ['Clima', 'Estado del Camino', 'Accesos / Obra', 'Otros'];
+    String? selectedType = initialValue ?? 'Obra';
+    final types = ['Obra', 'Proveedores', 'Maquinaria / Equipos', 'Materiales', 'Otros'];
     return showDialog<String>(
       context: context,
       barrierDismissible: false,
@@ -182,7 +177,7 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
         return SafeArea(
           child: Wrap(
             children: [
-              ListTile(
+              childTile(
                 leading: const Icon(Icons.camera_alt),
                 title: const Text('Tomar Foto'),
                 onTap: () {
@@ -190,7 +185,7 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
                   _replaceImage(index, ImageSource.camera);
                 },
               ),
-              ListTile(
+              childTile(
                 leading: const Icon(Icons.photo_library),
                 title: const Text('Seleccionar de Galería'),
                 onTap: () {
@@ -202,6 +197,14 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget childTile({required Widget leading, required Widget title, required VoidCallback onTap}) {
+    return ListTile(
+      leading: leading,
+      title: title,
+      onTap: onTap,
     );
   }
 
@@ -241,8 +244,11 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
       obraId: _selectedObraId,
       usuarioId: usuarioId,
       usuarioName: usuarioName,
-      clima: _clima,
-      estadoCamino: _estadoCamino,
+      proveedoresIds: _proveedoresIds,
+      maquinariasIds: _maquinariasIds,
+      materialesIds: _materialesIds,
+      equiposIds: _equiposIds,
+      camionesIds: _camionesIds,
       observaciones: _observacionesController.text.trim(),
       estado: estado,
       fotos: _fotos,
@@ -268,6 +274,88 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
         );
       }
     }
+  }
+
+  Widget _buildCatalogPanel({
+    required String title,
+    required IconData icon,
+    required List<OperativeCatalogItem> items,
+    required List<String> selectedIds,
+    required ValueChanged<List<String>> onChanged,
+    required bool isReadOnly,
+  }) {
+    final activeItems = items.where((item) => item.activa || selectedIds.contains(item.id)).toList();
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          leading: Icon(icon, color: Colors.blue.shade700),
+          title: Text(
+            '$title (${selectedIds.length} seleccionados)',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
+          children: [
+            if (activeItems.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.grey, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'No hay opciones activas en este catálogo.',
+                      style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Container(
+                constraints: const BoxConstraints(maxHeight: 250),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: Colors.grey.shade100)),
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: activeItems.length,
+                  itemBuilder: (context, index) {
+                    final item = activeItems[index];
+                    final isChecked = selectedIds.contains(item.id);
+
+                    return CheckboxListTile(
+                      activeColor: Colors.blue.shade700,
+                      dense: true,
+                      title: Text(
+                        item.nombre,
+                        style: TextStyle(
+                          color: item.activa ? Colors.black87 : Colors.grey,
+                          decoration: item.activa ? null : TextDecoration.lineThrough,
+                        ),
+                      ),
+                      value: isChecked,
+                      onChanged: isReadOnly
+                          ? null
+                          : (bool? value) {
+                              final newSelection = List<String>.from(selectedIds);
+                              if (value == true) {
+                                newSelection.add(item.id);
+                              } else {
+                                newSelection.remove(item.id);
+                              }
+                              onChanged(newSelection);
+                            },
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -344,107 +432,60 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
                 onChanged: isReadOnly ? null : (val) => setState(() => _selectedObraId = val),
                 validator: (val) => val == null ? 'Seleccione una obra' : null,
               ),
-              const SizedBox(height: 20),
-
-              // Clima Selection UI
-              const Text(
-                'Condición del Clima *',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _climaOptions.map((opt) {
-                  final label = opt['label'] as String;
-                  final icon = opt['icon'] as IconData;
-                  final color = opt['color'] as Color;
-                  final isSelected = _clima == label;
-
-                  return GestureDetector(
-                    onTap: isReadOnly ? null : () => setState(() => _clima = label),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: isSelected ? color.withValues(alpha: 0.15) : Colors.grey.shade50,
-                        border: Border.all(
-                          color: isSelected ? color : Colors.grey.shade300,
-                          width: isSelected ? 2 : 1,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(icon, color: isSelected ? color : Colors.grey.shade600, size: 20),
-                          const SizedBox(width: 6),
-                          Text(
-                            label,
-                            style: TextStyle(
-                              color: isSelected ? (color == Colors.orange ? Colors.orange.shade900 : color) : Colors.black87,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
               const SizedBox(height: 24),
 
-              // Camino Selection UI
+              // Dynamic catalog sections
               const Text(
-                'Estado del Camino *',
+                'Catálogos Operativos',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
               ),
               const SizedBox(height: 8),
-              Column(
-                children: _caminoOptions.map((opt) {
-                  final label = opt['label'] as String;
-                  final icon = opt['icon'] as IconData;
-                  final color = opt['color'] as Color;
-                  final isSelected = _estadoCamino == label;
-
-                  return GestureDetector(
-                    onTap: isReadOnly ? null : () => setState(() => _estadoCamino = label),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isSelected ? color.withValues(alpha: 0.08) : Colors.white,
-                        border: Border.all(
-                          color: isSelected ? color : Colors.grey.shade300,
-                          width: isSelected ? 2 : 1,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(icon, color: color, size: 28),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              label,
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: isSelected ? color : Colors.black87,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                          if (isSelected)
-                            Icon(Icons.check_circle, color: color, size: 20)
-                          else
-                            const Icon(Icons.circle_outlined, color: Colors.grey, size: 20),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
+              
+              _buildCatalogPanel(
+                title: 'Proveedores de Servicio',
+                icon: Icons.business,
+                items: catalogs.proveedores,
+                selectedIds: _proveedoresIds,
+                onChanged: (ids) => setState(() => _proveedoresIds = ids),
+                isReadOnly: isReadOnly,
               ),
+
+              _buildCatalogPanel(
+                title: 'Maquinaria de Obra',
+                icon: Icons.construction,
+                items: catalogs.maquinarias,
+                selectedIds: _maquinariasIds,
+                onChanged: (ids) => setState(() => _maquinariasIds = ids),
+                isReadOnly: isReadOnly,
+              ),
+
+              _buildCatalogPanel(
+                title: 'Control de Materiales',
+                icon: Icons.inventory_2,
+                items: catalogs.materialesControl,
+                selectedIds: _materialesIds,
+                onChanged: (ids) => setState(() => _materialesIds = ids),
+                isReadOnly: isReadOnly,
+              ),
+
+              _buildCatalogPanel(
+                title: 'Otros Equipos',
+                icon: Icons.handyman,
+                items: catalogs.otrosEquipos,
+                selectedIds: _equiposIds,
+                onChanged: (ids) => setState(() => _equiposIds = ids),
+                isReadOnly: isReadOnly,
+              ),
+
+              _buildCatalogPanel(
+                title: 'Camiones Internos',
+                icon: Icons.local_shipping,
+                items: catalogs.camionesInternos,
+                selectedIds: _camionesIds,
+                onChanged: (ids) => setState(() => _camionesIds = ids),
+                isReadOnly: isReadOnly,
+              ),
+
               const SizedBox(height: 16),
 
               // Evidencia Fotográfica Section

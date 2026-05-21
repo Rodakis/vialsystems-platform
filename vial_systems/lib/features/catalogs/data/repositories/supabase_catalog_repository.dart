@@ -13,6 +13,12 @@ class SupabaseCatalogRepository implements CatalogRepository {
   final String _choferesKey = 'choferes_data';
   final String _camionesKey = 'camiones_data';
   final String _recibidoresKey = 'recibidores_data';
+  final String _proveedoresKey = 'proveedores_data';
+  final String _maquinariasKey = 'maquinarias_data';
+  final String _materialesControlKey = 'materiales_control_data';
+  final String _otrosEquiposKey = 'otros_equipos_data';
+  final String _camionesInternosKey = 'camiones_internos_data';
+  final String _funcionesPersonalKey = 'funciones_personal_data';
 
   Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
 
@@ -94,5 +100,95 @@ class SupabaseCatalogRepository implements CatalogRepository {
   @override
   Future<void> addRecibidor(RecibidorModel recibidor) async {
     await _supabase.from('recibidores').insert({'id': recibidor.id, 'nombre': recibidor.nombre});
+  }
+
+  // Proveedores de Servicio
+  @override
+  Future<List<OperativeCatalogItem>> getProveedores() =>
+      _getSyncList('proveedores_servicio', _proveedoresKey, OperativeCatalogItem.fromJson);
+
+  @override
+  Future<void> addProveedor(OperativeCatalogItem item) async {
+    await _supabase.from('proveedores_servicio').insert({'id': item.id, 'nombre': item.nombre, 'activa': item.activa});
+  }
+
+  @override
+  Future<void> updateProveedor(OperativeCatalogItem item) async {
+    await _supabase.from('proveedores_servicio').update({'nombre': item.nombre, 'activa': item.activa}).eq('id', item.id);
+  }
+
+  // Maquinaria de Obra
+  @override
+  Future<List<OperativeCatalogItem>> getMaquinarias() =>
+      _getSyncList('maquinaria_obra', _maquinariasKey, OperativeCatalogItem.fromJson);
+
+  @override
+  Future<void> addMaquinaria(OperativeCatalogItem item) async {
+    await _supabase.from('maquinaria_obra').insert({'id': item.id, 'nombre': item.nombre, 'activa': item.activa});
+  }
+
+  @override
+  Future<void> updateMaquinaria(OperativeCatalogItem item) async {
+    await _supabase.from('maquinaria_obra').update({'nombre': item.nombre, 'activa': item.activa}).eq('id', item.id);
+  }
+
+  // Control de Materiales
+  @override
+  Future<List<OperativeCatalogItem>> getMaterialesControl() =>
+      _getSyncList('control_materiales', _materialesControlKey, OperativeCatalogItem.fromJson);
+
+  @override
+  Future<void> addMaterialControl(OperativeCatalogItem item) async {
+    await _supabase.from('control_materiales').insert({'id': item.id, 'nombre': item.nombre, 'activa': item.activa});
+  }
+
+  @override
+  Future<void> updateMaterialControl(OperativeCatalogItem item) async {
+    await _supabase.from('control_materiales').update({'nombre': item.nombre, 'activa': item.activa}).eq('id', item.id);
+  }
+
+  // Otros Equipos
+  @override
+  Future<List<OperativeCatalogItem>> getOtrosEquipos() =>
+      _getSyncList('otros_equipos', _otrosEquiposKey, OperativeCatalogItem.fromJson);
+
+  @override
+  Future<void> addOtroEquipo(OperativeCatalogItem item) async {
+    await _supabase.from('otros_equipos').insert({'id': item.id, 'nombre': item.nombre, 'activa': item.activa});
+  }
+
+  @override
+  Future<void> updateOtroEquipo(OperativeCatalogItem item) async {
+    await _supabase.from('otros_equipos').update({'nombre': item.nombre, 'activa': item.activa}).eq('id', item.id);
+  }
+
+  // Camiones Internos
+  @override
+  Future<List<OperativeCatalogItem>> getCamionesInternos() =>
+      _getSyncList('camiones_internos', _camionesInternosKey, OperativeCatalogItem.fromJson);
+
+  @override
+  Future<void> addCamionInterno(OperativeCatalogItem item) async {
+    await _supabase.from('camiones_internos').insert({'id': item.id, 'nombre': item.nombre, 'activa': item.activa});
+  }
+
+  @override
+  Future<void> updateCamionInterno(OperativeCatalogItem item) async {
+    await _supabase.from('camiones_internos').update({'nombre': item.nombre, 'activa': item.activa}).eq('id', item.id);
+  }
+
+  // Funciones de Personal
+  @override
+  Future<List<OperativeCatalogItem>> getFuncionesPersonal() =>
+      _getSyncList('funciones_personal', _funcionesPersonalKey, OperativeCatalogItem.fromJson);
+
+  @override
+  Future<void> addFuncionPersonal(OperativeCatalogItem item) async {
+    await _supabase.from('funciones_personal').insert({'id': item.id, 'nombre': item.nombre, 'activa': item.activa});
+  }
+
+  @override
+  Future<void> updateFuncionPersonal(OperativeCatalogItem item) async {
+    await _supabase.from('funciones_personal').update({'nombre': item.nombre, 'activa': item.activa}).eq('id', item.id);
   }
 }

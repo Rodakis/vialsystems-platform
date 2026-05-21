@@ -81,7 +81,7 @@ class InformeListScreen extends StatelessWidget {
                     children: [
                       ListTile(
                         leading: const Icon(Icons.wb_sunny, color: Colors.orange),
-                        title: const Text('Nuevo Informe Diario (Clima/Camino)'),
+                        title: const Text('Nuevo Informe Diario'),
                         onTap: () {
                           Navigator.pop(context);
                           Navigator.push(
@@ -141,6 +141,11 @@ class InformeListScreen extends StatelessWidget {
         
         final iconData = _getStatusIcon(inf.estado);
         final iconColor = _getStatusColor(inf.estado);
+        final totalItems = inf.proveedoresIds.length +
+            inf.maquinariasIds.length +
+            inf.materialesIds.length +
+            inf.equiposIds.length +
+            inf.camionesIds.length;
 
         return Card(
           elevation: 2,
@@ -159,7 +164,7 @@ class InformeListScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 4),
-                Text('Clima: ${inf.clima} | Camino: ${inf.estadoCamino}'),
+                Text('Elementos declarados: $totalItems | Fotos: ${inf.fotos.length}'),
                 Text('Fecha: $dateStr - Creado por: ${inf.usuarioName}'),
               ],
             ),
@@ -202,6 +207,7 @@ class InformeListScreen extends StatelessWidget {
         
         final iconData = _getStatusIcon(inf.estado);
         final iconColor = _getStatusColor(inf.estado);
+        final totalPersonal = inf.personalPorFuncion.values.fold(0, (sum, val) => sum + val);
 
         return Card(
           elevation: 2,
@@ -220,7 +226,7 @@ class InformeListScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 4),
-                Text('Horas: ${inf.horasTrabajadas}h | Personal: ${inf.personalPresente}'),
+                Text('Horas: ${inf.horasTrabajadas}h | Personal: $totalPersonal'),
                 Text(
                   'Tareas: ${inf.tareasRealizadas}',
                   maxLines: 1,
