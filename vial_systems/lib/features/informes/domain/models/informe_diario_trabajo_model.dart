@@ -12,6 +12,7 @@ class InformeDiarioTrabajoModel {
   final String maquinariaUtilizada;
   final String observaciones;
   final RemitoStatus estado;
+  final List<RemitoFotoModel> fotos;
 
   InformeDiarioTrabajoModel({
     required this.id,
@@ -25,6 +26,7 @@ class InformeDiarioTrabajoModel {
     required this.maquinariaUtilizada,
     required this.observaciones,
     required this.estado,
+    required this.fotos,
   });
 
   factory InformeDiarioTrabajoModel.fromJson(Map<String, dynamic> json) {
@@ -43,6 +45,10 @@ class InformeDiarioTrabajoModel {
         (e) => e.name == json['estado'],
         orElse: () => RemitoStatus.borrador,
       ),
+      fotos: (json['fotos'] as List<dynamic>?)
+              ?.map((e) => RemitoFotoModel.fromString(e.toString()))
+              .toList() ??
+          [],
     );
   }
 
@@ -59,6 +65,7 @@ class InformeDiarioTrabajoModel {
       'maquinariaUtilizada': maquinariaUtilizada,
       'observaciones': observaciones,
       'estado': estado.name,
+      'fotos': fotos.map((f) => f.toString()).toList(),
     };
   }
 }
