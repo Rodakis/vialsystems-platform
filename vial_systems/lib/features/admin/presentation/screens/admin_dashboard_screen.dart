@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
 import 'admin_remitos_screen.dart';
 import 'admin_catalogs_screen.dart';
+import 'admin_informes_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -55,6 +56,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 selectedIcon: Icon(Icons.library_books),
                 label: Text('Catálogos'),
               ),
+              NavigationRailDestination(
+                icon: Icon(Icons.assignment),
+                selectedIcon: Icon(Icons.assignment),
+                label: Text('Partes Diarios'),
+              ),
             ],
           ),
           const VerticalDivider(thickness: 1, width: 1),
@@ -74,6 +80,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return const AdminRemitosScreen();
       case 2:
         return const AdminCatalogsScreen();
+      case 3:
+        return const AdminInformesScreen();
       default:
         return const SizedBox.shrink();
     }

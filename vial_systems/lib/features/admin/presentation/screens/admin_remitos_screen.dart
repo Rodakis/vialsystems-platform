@@ -79,8 +79,12 @@ class _AdminRemitosScreenState extends State<AdminRemitosScreen> {
                       DataColumn(label: Text('Fotos')),
                     ],
                     rows: filteredRemitos.map((r) {
-                      final obra = catalogs.obras.firstWhere((o) => o.id == r.obraId, orElse: () => catalogs.obras.first).nombre;
-                      final material = catalogs.materiales.firstWhere((m) => m.id == r.materialId, orElse: () => catalogs.materiales.first).nombre;
+                      final obra = catalogs.obras.any((o) => o.id == r.obraId)
+                          ? catalogs.obras.firstWhere((o) => o.id == r.obraId).nombre
+                          : (catalogs.obras.isNotEmpty ? catalogs.obras.first.nombre : 'Desconocida');
+                      final material = catalogs.materiales.any((m) => m.id == r.materialId)
+                          ? catalogs.materiales.firstWhere((m) => m.id == r.materialId).nombre
+                          : (catalogs.materiales.isNotEmpty ? catalogs.materiales.first.nombre : 'Desconocido');
                       
                       return DataRow(
                         onSelectChanged: (_) => _showRemitoDetails(context, r, catalogs),
