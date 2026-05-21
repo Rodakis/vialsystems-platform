@@ -30,10 +30,10 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
   final ImagePicker _imagePicker = ImagePicker();
   List<RemitoFotoModel> _fotos = [];
 
-  // Listas de IDs seleccionados para los 5 catálogos operativos
+  // Listas de IDs seleccionados para los catálogos operativos
   List<String> _proveedoresIds = [];
   List<String> _maquinariasIds = [];
-  List<String> _materialesIds = [];
+  List<InformeMaterialItem> _materiales = [];
   List<String> _equiposIds = [];
   List<String> _camionesIds = [];
 
@@ -48,7 +48,7 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
       _fotos = List.from(inf.fotos);
       _proveedoresIds = List.from(inf.proveedoresIds);
       _maquinariasIds = List.from(inf.maquinariasIds);
-      _materialesIds = List.from(inf.materialesIds);
+      _materiales = List.from(inf.materiales);
       _equiposIds = List.from(inf.equiposIds);
       _camionesIds = List.from(inf.camionesIds);
     } else {
@@ -246,7 +246,7 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
       usuarioName: usuarioName,
       proveedoresIds: _proveedoresIds,
       maquinariasIds: _maquinariasIds,
-      materialesIds: _materialesIds,
+      materiales: _materiales,
       equiposIds: _equiposIds,
       camionesIds: _camionesIds,
       observaciones: _observacionesController.text.trim(),
@@ -358,6 +358,235 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
     );
   }
 
+  Widget _buildMaterialesPanel({
+    required List<OperativeCatalogItem> activeCatalogItems,
+    required bool isReadOnly,
+  }) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: _materiales.isNotEmpty,
+          leading: Icon(Icons.inventory_2, color: Colors.blue.shade700),
+          title: Text(
+            'Control de Materiales (${_materiales.length} agregados)',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (_materiales.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24.0),
+                      child: Column(
+                        children: [
+                          Icon(Icons.inventory_2_outlined, color: Colors.grey.shade400, size: 40),
+                          const SizedBox(height: 8),
+                          Text(
+                            'No se han agregado materiales.',
+                            style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey.shade500),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _materiales.length,
+                      separatorBuilder: (context, index) => const Divider(height: 24),
+                      itemBuilder: (context, index) {
+                        final item = _materiales[index];
+
+                        // Find selected catalog item to display name if read-only
+                        final catalogItem = activeCatalogItems.firstWhere(
+                          (c) => c.id == item.materialId,
+                          orElse: () => OperativeCatalogItem(id: '', nombre: 'Desconocido'),
+                        );
+
+                        if (isReadOnly) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 3,
+                                  child: Text(
+                                    catalogItem.nombre,
+                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    '${item.cantidad}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                    textAlign: TextAlign.right,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    item.unidad,
+                                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        // Form controllers or local state change
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Dropdown Material
+                            Expanded(
+                              flex: 3,
+                              child: DropdownButtonFormField<String>(
+                                isExpanded: true,
+                                initialValue: item.materialId.isEmpty ? null : item.materialId,
+                                decoration: const InputDecoration(
+                                  labelText: 'Material',
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                  border: OutlineInputBorder(),
+                                ),
+                                items: activeCatalogItems.map((c) {
+                                  return DropdownMenuItem<String>(
+                                    value: c.id,
+                                    child: Text(c.nombre, overflow: TextOverflow.ellipsis),
+                                  );
+                                }).toList(),
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    final catItem = activeCatalogItems.firstWhere((c) => c.id == val);
+                                    setState(() {
+                                      _materiales[index] = InformeMaterialItem(
+                                        materialId: val,
+                                        cantidad: item.cantidad,
+                                        unidad: catItem.unidadDefault ?? item.unidad,
+                                        observacion: item.observacion,
+                                      );
+                                    });
+                                  }
+                                },
+                                validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Cantidad input
+                            Expanded(
+                              flex: 2,
+                              child: TextFormField(
+                                initialValue: item.cantidad > 0 ? item.cantidad.toString() : '',
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                decoration: const InputDecoration(
+                                  labelText: 'Cant.',
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                  border: OutlineInputBorder(),
+                                ),
+                                onChanged: (val) {
+                                  final cant = double.tryParse(val) ?? 0.0;
+                                  setState(() {
+                                    _materiales[index] = InformeMaterialItem(
+                                      materialId: item.materialId,
+                                      cantidad: cant,
+                                      unidad: item.unidad,
+                                      observacion: item.observacion,
+                                    );
+                                  });
+                                },
+                                validator: (val) {
+                                  if (val == null || val.isEmpty) return 'Requerido';
+                                  final d = double.tryParse(val);
+                                  if (d == null) return 'Inválido';
+                                  if (d <= 0) return '> 0';
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Unidad dropdown
+                            Expanded(
+                              flex: 2,
+                              child: DropdownButtonFormField<String>(
+                                initialValue: item.unidad.isEmpty ? null : item.unidad,
+                                decoration: const InputDecoration(
+                                  labelText: 'Unid.',
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                  border: OutlineInputBorder(),
+                                ),
+                                items: const [
+                                  DropdownMenuItem(value: 'm³', child: Text('m³')),
+                                  DropdownMenuItem(value: 'toneladas', child: Text('ton')),
+                                  DropdownMenuItem(value: 'viajes', child: Text('viajes')),
+                                  DropdownMenuItem(value: 'unidades', child: Text('unid')),
+                                ],
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setState(() {
+                                      _materiales[index] = InformeMaterialItem(
+                                        materialId: item.materialId,
+                                        cantidad: item.cantidad,
+                                        unidad: val,
+                                        observacion: item.observacion,
+                                      );
+                                    });
+                                  }
+                                },
+                                validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
+                              ),
+                            ),
+                            // Delete button
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.red),
+                              onPressed: () {
+                                setState(() {
+                                  _materiales.removeAt(index);
+                                });
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  if (!isReadOnly) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _materiales.add(InformeMaterialItem(
+                            materialId: '',
+                            cantidad: 0.0,
+                            unidad: 'm³',
+                          ));
+                        });
+                      },
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Agregar Material'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.blue.shade800,
+                        side: BorderSide(color: Colors.blue.shade200),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final catalogs = context.watch<CatalogProvider>();
@@ -459,12 +688,8 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
                 isReadOnly: isReadOnly,
               ),
 
-              _buildCatalogPanel(
-                title: 'Control de Materiales',
-                icon: Icons.inventory_2,
-                items: catalogs.materialesControl,
-                selectedIds: _materialesIds,
-                onChanged: (ids) => setState(() => _materialesIds = ids),
+              _buildMaterialesPanel(
+                activeCatalogItems: catalogs.materialesControl,
                 isReadOnly: isReadOnly,
               ),
 

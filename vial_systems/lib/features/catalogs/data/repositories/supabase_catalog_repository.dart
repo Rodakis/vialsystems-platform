@@ -139,12 +139,21 @@ class SupabaseCatalogRepository implements CatalogRepository {
 
   @override
   Future<void> addMaterialControl(OperativeCatalogItem item) async {
-    await _supabase.from('control_materiales').insert({'id': item.id, 'nombre': item.nombre, 'activa': item.activa});
+    await _supabase.from('control_materiales').insert({
+      'id': item.id,
+      'nombre': item.nombre,
+      'activa': item.activa,
+      'unidad_default': item.unidadDefault,
+    });
   }
 
   @override
   Future<void> updateMaterialControl(OperativeCatalogItem item) async {
-    await _supabase.from('control_materiales').update({'nombre': item.nombre, 'activa': item.activa}).eq('id', item.id);
+    await _supabase.from('control_materiales').update({
+      'nombre': item.nombre,
+      'activa': item.activa,
+      'unidad_default': item.unidadDefault,
+    }).eq('id', item.id);
   }
 
   // Otros Equipos

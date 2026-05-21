@@ -61,7 +61,7 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
               Tab(text: 'Control Materiales'),
               Tab(text: 'Otros Equipos'),
               Tab(text: 'Camiones Internos'),
-              Tab(text: 'Funciones Personal'),
+              Tab(text: 'Personal'),
             ],
           ),
         ),
@@ -72,42 +72,43 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
               _buildCatalogTab(
                 title: 'Proveedores de Servicio',
                 items: catalogProvider.proveedores,
-                onAdd: (nombre) => catalogProvider.addProveedor(nombre),
+                onAdd: (nombre, [unidad]) => catalogProvider.addProveedor(nombre),
                 onEdit: (item) => catalogProvider.updateProveedor(item),
                 onToggle: (item) => catalogProvider.toggleProveedorStatus(item),
               ),
               _buildCatalogTab(
                 title: 'Maquinaria de Obra',
                 items: catalogProvider.maquinarias,
-                onAdd: (nombre) => catalogProvider.addMaquinaria(nombre),
+                onAdd: (nombre, [unidad]) => catalogProvider.addMaquinaria(nombre),
                 onEdit: (item) => catalogProvider.updateMaquinaria(item),
                 onToggle: (item) => catalogProvider.toggleMaquinariaStatus(item),
               ),
               _buildCatalogTab(
                 title: 'Control de Materiales',
                 items: catalogProvider.materialesControl,
-                onAdd: (nombre) => catalogProvider.addMaterialControl(nombre),
+                onAdd: (nombre, [unidad]) => catalogProvider.addMaterialControl(nombre, unidadDefault: unidad),
                 onEdit: (item) => catalogProvider.updateMaterialControl(item),
                 onToggle: (item) => catalogProvider.toggleMaterialControlStatus(item),
+                isMaterial: true,
               ),
               _buildCatalogTab(
                 title: 'Otros Equipos',
                 items: catalogProvider.otrosEquipos,
-                onAdd: (nombre) => catalogProvider.addOtroEquipo(nombre),
-                onEdit: (item) => catalogProvider.updateOtroEquipo(item), // provider method name is actually updateOtroEquipo, let's verify or use updateOtroEquipo
+                onAdd: (nombre, [unidad]) => catalogProvider.addOtroEquipo(nombre),
+                onEdit: (item) => catalogProvider.updateOtroEquipo(item),
                 onToggle: (item) => catalogProvider.toggleOtroEquipoStatus(item),
               ),
               _buildCatalogTab(
                 title: 'Camiones Internos',
                 items: catalogProvider.camionesInternos,
-                onAdd: (nombre) => catalogProvider.addCamionInterno(nombre),
+                onAdd: (nombre, [unidad]) => catalogProvider.addCamionInterno(nombre),
                 onEdit: (item) => catalogProvider.updateCamionInterno(item),
                 onToggle: (item) => catalogProvider.toggleCamionInternoStatus(item),
               ),
               _buildCatalogTab(
-                title: 'Funciones de Personal',
+                title: 'Personal',
                 items: catalogProvider.funcionesPersonal,
-                onAdd: (nombre) => catalogProvider.addFuncionPersonal(nombre),
+                onAdd: (nombre, [unidad]) => catalogProvider.addFuncionPersonal(nombre),
                 onEdit: (item) => catalogProvider.updateFuncionPersonal(item),
                 onToggle: (item) => catalogProvider.toggleFuncionPersonalStatus(item),
               ),
@@ -121,9 +122,10 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
   Widget _buildCatalogTab({
     required String title,
     required List<OperativeCatalogItem> items,
-    required Future<void> Function(String) onAdd,
+    required Future<void> Function(String, [String?]) onAdd,
     required Future<void> Function(OperativeCatalogItem) onEdit,
     required Future<void> Function(OperativeCatalogItem) onToggle,
+    bool isMaterial = false,
   }) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -154,7 +156,7 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                onPressed: () => _showAddDialog(title, onAdd),
+                onPressed: () => _showAddDialog(title, onAdd, isMaterial: isMaterial),
               ),
             ],
           ),
@@ -212,6 +214,17 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
+                                if (isMaterial && item.unidadDefault != null) ...[
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '•  Unidad: ${item.unidadDefault}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -221,7 +234,7 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
                               IconButton(
                                 icon: const Icon(Icons.edit_outlined, color: Colors.blue),
                                 tooltip: 'Editar Nombre',
-                                onPressed: () => _showEditDialog(item, onEdit),
+                                onPressed: () => _showEditDialog(item, onEdit, isMaterial: isMaterial),
                               ),
                               Switch(
                                 value: item.activa,
@@ -253,22 +266,55 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
     );
   }
 
-  void _showAddDialog(String catalogTitle, Future<void> Function(String) onSave) {
+  void _showAddDialog(String catalogTitle, Future<void> Function(String, [String?]) onSave, {bool isMaterial = false}) {
     final txtController = TextEditingController();
+    String? selectedUnidad = 'm³';
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text('Nuevo elemento en $catalogTitle'),
-          content: TextField(
-            controller: txtController,
-            decoration: const InputDecoration(
-              hintText: 'Ej. Nombre o descripción...',
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-            autofocus: true,
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: txtController,
+                    decoration: const InputDecoration(
+                      hintText: 'Ej. Nombre o descripción...',
+                      labelText: 'Nombre / Descripción',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    autofocus: true,
+                  ),
+                  if (isMaterial) ...[
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedUnidad,
+                      decoration: const InputDecoration(
+                        labelText: 'Unidad por Defecto',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'm³', child: Text('m³ (Metros Cúbicos)')),
+                        DropdownMenuItem(value: 'toneladas', child: Text('toneladas (Toneladas)')),
+                        DropdownMenuItem(value: 'viajes', child: Text('viajes (Viajes)')),
+                        DropdownMenuItem(value: 'unidades', child: Text('unidades (Unidades)')),
+                      ],
+                      onChanged: (val) {
+                        setState(() {
+                          selectedUnidad = val;
+                        });
+                      },
+                    ),
+                  ],
+                ],
+              );
+            }
           ),
           actions: [
             TextButton(
@@ -280,7 +326,11 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
                 final val = txtController.text.trim();
                 if (val.isNotEmpty) {
                   try {
-                    await onSave(val);
+                    if (isMaterial) {
+                      await onSave(val, selectedUnidad);
+                    } else {
+                      await onSave(val);
+                    }
                     if (context.mounted) Navigator.pop(context);
                   } catch (e) {
                     if (context.mounted) {
@@ -302,22 +352,55 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
     );
   }
 
-  void _showEditDialog(OperativeCatalogItem item, Future<void> Function(OperativeCatalogItem) onSave) {
+  void _showEditDialog(OperativeCatalogItem item, Future<void> Function(OperativeCatalogItem) onSave, {bool isMaterial = false}) {
     final txtController = TextEditingController(text: item.nombre);
+    String? selectedUnidad = item.unidadDefault ?? 'm³';
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text('Editar Elemento'),
-          content: TextField(
-            controller: txtController,
-            decoration: const InputDecoration(
-              hintText: 'Editar nombre...',
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-            autofocus: true,
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: txtController,
+                    decoration: const InputDecoration(
+                      hintText: 'Editar nombre...',
+                      labelText: 'Nombre / Descripción',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    autofocus: true,
+                  ),
+                  if (isMaterial) ...[
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedUnidad,
+                      decoration: const InputDecoration(
+                        labelText: 'Unidad por Defecto',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'm³', child: Text('m³ (Metros Cúbicos)')),
+                        DropdownMenuItem(value: 'toneladas', child: Text('toneladas (Toneladas)')),
+                        DropdownMenuItem(value: 'viajes', child: Text('viajes (Viajes)')),
+                        DropdownMenuItem(value: 'unidades', child: Text('unidades (Unidades)')),
+                      ],
+                      onChanged: (val) {
+                        setState(() {
+                          selectedUnidad = val;
+                        });
+                      },
+                    ),
+                  ],
+                ],
+              );
+            }
           ),
           actions: [
             TextButton(
@@ -333,6 +416,7 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
                       id: item.id,
                       nombre: val,
                       activa: item.activa,
+                      unidadDefault: isMaterial ? selectedUnidad : item.unidadDefault,
                     );
                     await onSave(updatedItem);
                     if (context.mounted) Navigator.pop(context);

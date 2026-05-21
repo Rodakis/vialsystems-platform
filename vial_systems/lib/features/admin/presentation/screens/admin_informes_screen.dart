@@ -276,7 +276,7 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
               final obra = catalogs.obras
                   .firstWhere((o) => o.id == inf.obraId, orElse: () => catalogs.obras.first)
                   .nombre;
-              final totalPersonal = inf.personalPorFuncion.values.fold(0, (sum, val) => sum + val);
+              final totalPersonal = inf.personal.length;
               return DataRow(
                 onSelectChanged: (_) => _showTrabajoDetailDialog(context, inf, obra, catalogs),
                 cells: [
@@ -333,7 +333,10 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
                   const SizedBox(height: 8),
                   _buildCatalogSection('Proveedores de Servicio:', inf.proveedoresIds, catalogs.proveedores),
                   _buildCatalogSection('Maquinaria de Obra:', inf.maquinariasIds, catalogs.maquinarias),
-                  _buildCatalogSection('Control de Materiales:', inf.materialesIds, catalogs.materialesControl),
+                  const Text('Control de Materiales:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54)),
+                  const SizedBox(height: 4),
+                  _buildMaterialsTable(inf.materiales, catalogs.materialesControl),
+                  const SizedBox(height: 8),
                   _buildCatalogSection('Otros Equipos:', inf.equiposIds, catalogs.otrosEquipos),
                   _buildCatalogSection('Camiones Internos:', inf.camionesIds, catalogs.camionesInternos),
                   const Divider(),
@@ -486,7 +489,8 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
   }
 
   void _showTrabajoDetailDialog(BuildContext context, InformeDiarioTrabajoModel inf, String obraName, CatalogProvider catalogs) {
-    final totalPersonal = inf.personalPorFuncion.values.fold(0, (sum, val) => sum + val);
+    final totalPersonal = inf.personal.length;
+    final totalHorasPersonal = inf.personal.fold<double>(0.0, (sum, p) => sum + p.horasTrabajadas);
     showDialog(
       context: context,
       builder: (context) {
@@ -510,12 +514,13 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
                   _buildDetailRow('Operador:', '${inf.usuarioName} (ID: ${inf.usuarioId})'),
                   _buildDetailRow('Horas Trabajadas:', '${inf.horasTrabajadas} horas'),
                   _buildDetailRow('Total Personal:', '$totalPersonal personas'),
+                  _buildDetailRow('Suma Horas Personal:', '${totalHorasPersonal.toStringAsFixed(1)} hs'),
                   const SizedBox(height: 12),
                   const Divider(),
                   const SizedBox(height: 8),
-                  const Text('Personal por Función:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+                  const Text('Personal:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
                   const SizedBox(height: 6),
-                  _buildPersonalBreakdown(inf.personalPorFuncion, catalogs.funcionesPersonal),
+                  _buildPersonalTable(inf.personal, catalogs.funcionesPersonal),
                   const SizedBox(height: 12),
                   _buildCatalogSection('Maquinaria Utilizada:', inf.maquinariaIds, catalogs.maquinarias),
                   const Divider(),
@@ -715,36 +720,117 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
     );
   }
 
-  Widget _buildPersonalBreakdown(Map<String, int> personalMap, List<OperativeCatalogItem> catalogItems) {
-    final entries = personalMap.entries.where((e) => e.value > 0).toList();
-    if (entries.isEmpty) {
+  Widget _buildMaterialsTable(List<InformeMaterialItem> materiales, List<OperativeCatalogItem> catalogItems) {
+    if (materiales.isEmpty) {
       return const Text('Ninguno', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey, fontSize: 13));
     }
     return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4.0),
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey.shade300),
       ),
-      child: Column(
-        children: entries.map((entry) {
-          final item = catalogItems.firstWhere((x) => x.id == entry.key, orElse: () => OperativeCatalogItem(id: entry.key, nombre: 'Función ID: ${entry.key}'));
-          return ListTile(
-            dense: true,
-            title: Text(item.nombre, style: const TextStyle(fontWeight: FontWeight.w500)),
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.blueAccent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${entry.value}',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent),
-              ),
+      child: Table(
+        columnWidths: const {
+          0: FlexColumnWidth(3),
+          1: FlexColumnWidth(2),
+          2: FlexColumnWidth(2),
+        },
+        border: TableBorder.symmetric(inside: BorderSide(color: Colors.grey.shade200, width: 1)),
+        children: [
+          TableRow(
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
             ),
-          );
-        }).toList(),
+            children: const [
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Material', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue)),
+              ),
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Cant.', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue)),
+              ),
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Unidad', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue)),
+              ),
+            ],
+          ),
+          ...materiales.map((m) {
+            final item = catalogItems.firstWhere((x) => x.id == m.materialId, orElse: () => OperativeCatalogItem(id: m.materialId, nombre: 'ID: ${m.materialId}'));
+            return TableRow(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(item.nombre, style: const TextStyle(fontSize: 12)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(m.cantidad.toString(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(m.unidad, style: const TextStyle(fontSize: 12)),
+                ),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPersonalTable(List<InformePersonalItem> personalList, List<OperativeCatalogItem> catalogItems) {
+    if (personalList.isEmpty) {
+      return const Text('Ninguno', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey, fontSize: 13));
+    }
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4.0),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Table(
+        columnWidths: const {
+          0: FlexColumnWidth(4),
+          1: FlexColumnWidth(3),
+        },
+        border: TableBorder.symmetric(inside: BorderSide(color: Colors.grey.shade200, width: 1)),
+        children: [
+          TableRow(
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+            ),
+            children: const [
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Rol / Función', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue)),
+              ),
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Horas Trabajadas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue)),
+              ),
+            ],
+          ),
+          ...personalList.map((p) {
+            final item = catalogItems.firstWhere((x) => x.id == p.personalRoleId, orElse: () => OperativeCatalogItem(id: p.personalRoleId, nombre: 'Rol ID: ${p.personalRoleId}'));
+            return TableRow(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(item.nombre, style: const TextStyle(fontSize: 12)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('${p.horasTrabajadas} hs', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                ),
+              ],
+            );
+          }),
+        ],
       ),
     );
   }

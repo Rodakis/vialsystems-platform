@@ -9,6 +9,7 @@ import '../../../../core/providers/catalog_provider.dart';
 import '../../../../core/providers/informe_provider.dart';
 import '../../../remito/domain/models/remito_model.dart';
 import '../../domain/models/informe_diario_trabajo_model.dart';
+import '../../../../features/catalogs/domain/models/catalog_models.dart';
 
 class InformeDiarioTrabajoFormScreen extends StatefulWidget {
   final InformeDiarioTrabajoModel? informe;
@@ -32,7 +33,7 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
   List<RemitoFotoModel> _fotos = [];
 
   // Dynamic personal and machinery catalog states
-  Map<String, int> _personalPorFuncion = {};
+  List<InformePersonalItem> _personal = [];
   List<String> _maquinariaIds = [];
 
   @override
@@ -46,7 +47,7 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
       _horasController.text = inf.horasTrabajadas.toString();
       _observacionesController.text = inf.observaciones;
       _fotos = List.from(inf.fotos);
-      _personalPorFuncion = Map.from(inf.personalPorFuncion);
+      _personal = List.from(inf.personal);
       _maquinariaIds = List.from(inf.maquinariaIds);
     } else {
       _fecha = DateTime.now();
@@ -214,7 +215,7 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
   }
 
   void _saveInforme(RemitoStatus estado) async {
-    final totalPersonal = _personalPorFuncion.values.fold(0, (sum, val) => sum + val);
+    final hasPersonalWithHours = _personal.any((p) => p.horasTrabajadas > 0);
 
     if (estado == RemitoStatus.listoParaEnviar) {
       if (_selectedObraId == null) {
@@ -232,10 +233,10 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
         );
         return;
       }
-      if (totalPersonal <= 0) {
+      if (!hasPersonalWithHours) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Debe registrar al menos una persona presente (cantidad > 0) para enviar el reporte.'),
+            content: Text('Debe registrar al menos una persona con horas trabajadas mayores a 0 para enviar el reporte.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -258,7 +259,7 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
       usuarioName: usuarioName,
       tareasRealizadas: _tareasController.text.trim(),
       horasTrabajadas: horas,
-      personalPorFuncion: _personalPorFuncion,
+      personal: _personal,
       maquinariaIds: _maquinariaIds,
       observaciones: _observacionesController.text.trim(),
       estado: estado,
@@ -401,13 +402,201 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
     );
   }
 
+  Widget _buildPersonalPanel({
+    required List<OperativeCatalogItem> activeCatalogItems,
+    required bool isReadOnly,
+  }) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: _personal.isNotEmpty,
+          leading: Icon(Icons.people_outline, color: Colors.blue.shade700),
+          title: Text(
+            'Personal (${_personal.length} agregados)',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (_personal.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24.0),
+                      child: Column(
+                        children: [
+                          Icon(Icons.people_outline, color: Colors.grey.shade400, size: 40),
+                          const SizedBox(height: 8),
+                          Text(
+                            'No se ha agregado personal.',
+                            style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey.shade500),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _personal.length,
+                      separatorBuilder: (context, index) => const Divider(height: 20),
+                      itemBuilder: (context, index) {
+                        final item = _personal[index];
+
+                        // Find selected catalog item to display name if read-only
+                        final catalogItem = activeCatalogItems.firstWhere(
+                          (c) => c.id == item.personalRoleId,
+                          orElse: () => OperativeCatalogItem(id: '', nombre: 'Desconocido'),
+                        );
+
+                        if (isReadOnly) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  catalogItem.nombre,
+                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      '${item.horasTrabajadas}',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'hs',
+                                      style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        // Form controllers or local state change
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Dropdown Role
+                            Expanded(
+                              flex: 4,
+                              child: DropdownButtonFormField<String>(
+                                isExpanded: true,
+                                initialValue: item.personalRoleId.isEmpty ? null : item.personalRoleId,
+                                decoration: const InputDecoration(
+                                  labelText: 'Rol / Función',
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                  border: OutlineInputBorder(),
+                                ),
+                                items: activeCatalogItems.map((c) {
+                                  return DropdownMenuItem<String>(
+                                    value: c.id,
+                                    child: Text(c.nombre, overflow: TextOverflow.ellipsis),
+                                  );
+                                }).toList(),
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setState(() {
+                                      _personal[index] = InformePersonalItem(
+                                        personalRoleId: val,
+                                        horasTrabajadas: item.horasTrabajadas,
+                                        observacion: item.observacion,
+                                      );
+                                    });
+                                  }
+                                },
+                                validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Horas input
+                            Expanded(
+                              flex: 3,
+                              child: TextFormField(
+                                initialValue: item.horasTrabajadas > 0 ? item.horasTrabajadas.toString() : '',
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                decoration: const InputDecoration(
+                                  labelText: 'Horas (hs)',
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                  border: OutlineInputBorder(),
+                                  hintText: 'e.g. 8',
+                                ),
+                                onChanged: (val) {
+                                  final hs = double.tryParse(val) ?? 0.0;
+                                  setState(() {
+                                    _personal[index] = InformePersonalItem(
+                                      personalRoleId: item.personalRoleId,
+                                      horasTrabajadas: hs,
+                                      observacion: item.observacion,
+                                    );
+                                  });
+                                },
+                                validator: (val) {
+                                  if (val == null || val.isEmpty) return 'Requerido';
+                                  final d = double.tryParse(val);
+                                  if (d == null) return 'Inválido';
+                                  if (d < 0) return 'Mínimo 0';
+                                  if (d > 24) return 'Máximo 24';
+                                  return null;
+                                },
+                              ),
+                            ),
+                            // Delete button
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.red),
+                              onPressed: () {
+                                setState(() {
+                                  _personal.removeAt(index);
+                                });
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  if (!isReadOnly) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _personal.add(InformePersonalItem(
+                            personalRoleId: '',
+                            horasTrabajadas: 0.0,
+                          ));
+                        });
+                      },
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Agregar Personal'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.blue.shade800,
+                        side: BorderSide(color: Colors.blue.shade200),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final catalogs = context.watch<CatalogProvider>();
     final isReadOnly = widget.informe != null && widget.informe!.estado != RemitoStatus.borrador;
 
-    // Obtener funciones de personal activas
-    final activeFunciones = catalogs.funcionesPersonal.where((item) => item.activa || _personalPorFuncion.containsKey(item.id)).toList();
     // Obtener maquinarias activas
     final activeMaquinarias = catalogs.maquinarias.where((item) => item.activa || _maquinariaIds.contains(item.id)).toList();
 
@@ -503,92 +692,12 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
               ),
               const SizedBox(height: 24),
 
-              // Dynamic catalog personal counts by role
-              const Text(
-                'Personal Presente por Función *',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+              // Dynamic catalog personal list
+              _buildPersonalPanel(
+                activeCatalogItems: catalogs.funcionesPersonal,
+                isReadOnly: isReadOnly,
               ),
-              const SizedBox(height: 8),
-              if (activeFunciones.isEmpty)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.info_outline, color: Colors.grey),
-                      SizedBox(width: 8),
-                      Text('No hay funciones configuradas en el catálogo.', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey)),
-                    ],
-                  ),
-                )
-              else
-                Column(
-                  children: activeFunciones.map((fun) {
-                    final count = _personalPorFuncion[fun.id] ?? 0;
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      elevation: 0.5,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade200)),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                        child: Row(
-                          children: [
-                            Icon(Icons.person_outline, color: fun.activa ? Colors.blue.shade700 : Colors.grey),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                fun.nombre,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: fun.activa ? Colors.black87 : Colors.grey,
-                                  decoration: fun.activa ? null : TextDecoration.lineThrough,
-                                ),
-                              ),
-                            ),
-                            // Counters +/-
-                            Row(
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                                  onPressed: isReadOnly || count <= 0
-                                      ? null
-                                      : () {
-                                          setState(() {
-                                            _personalPorFuncion[fun.id] = count - 1;
-                                          });
-                                        },
-                                ),
-                                Container(
-                                  width: 40,
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    count.toString(),
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.add_circle_outline, color: Colors.green),
-                                  onPressed: isReadOnly
-                                      ? null
-                                      : () {
-                                          setState(() {
-                                            _personalPorFuncion[fun.id] = count + 1;
-                                          });
-                                        },
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Dynamic Machinery catalog selection
               Card(

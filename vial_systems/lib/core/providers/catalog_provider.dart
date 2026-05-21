@@ -172,8 +172,8 @@ class CatalogProvider extends ChangeNotifier {
   }
 
   // Control de Materiales
-  Future<void> addMaterialControl(String nombre) async {
-    final item = OperativeCatalogItem(id: const Uuid().v4(), nombre: nombre);
+  Future<void> addMaterialControl(String nombre, {String? unidadDefault}) async {
+    final item = OperativeCatalogItem(id: const Uuid().v4(), nombre: nombre, unidadDefault: unidadDefault);
     await _repository.addMaterialControl(item);
     _materialesControl.add(item);
     notifyListeners();
@@ -189,7 +189,12 @@ class CatalogProvider extends ChangeNotifier {
   }
 
   Future<void> toggleMaterialControlStatus(OperativeCatalogItem item) async {
-    final updated = OperativeCatalogItem(id: item.id, nombre: item.nombre, activa: !item.activa);
+    final updated = OperativeCatalogItem(
+      id: item.id,
+      nombre: item.nombre,
+      activa: !item.activa,
+      unidadDefault: item.unidadDefault,
+    );
     await updateMaterialControl(updated);
   }
 

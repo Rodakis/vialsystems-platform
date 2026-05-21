@@ -80,11 +80,13 @@ class OperativeCatalogItem {
   final String id;
   final String nombre;
   final bool activa;
+  final String? unidadDefault;
 
   OperativeCatalogItem({
     required this.id,
     required this.nombre,
     this.activa = true,
+    this.unidadDefault,
   });
 
   factory OperativeCatalogItem.fromJson(Map<String, dynamic> json) {
@@ -92,6 +94,7 @@ class OperativeCatalogItem {
       id: json['id'] as String,
       nombre: json['nombre'] as String,
       activa: json['activa'] as bool? ?? json['active'] as bool? ?? true,
+      unidadDefault: json['unidad_default'] as String? ?? json['unidadDefault'] as String?,
     );
   }
 
@@ -100,6 +103,7 @@ class OperativeCatalogItem {
       'id': id,
       'nombre': nombre,
       'activa': activa,
+      'unidad_default': unidadDefault,
     };
   }
 }

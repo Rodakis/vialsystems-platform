@@ -57,6 +57,18 @@ class InformeProvider extends ChangeNotifier {
           .order('fecha', ascending: false);
 
       _adminInformesDiarios = (responseDiarios as List).map((row) {
+        final rawMateriales = row['materiales'] ?? row['materiales_ids'];
+        List<InformeMaterialItem> materialesList = [];
+        if (rawMateriales is List) {
+          materialesList = rawMateriales.map((e) {
+            if (e is Map) {
+              return InformeMaterialItem.fromJson(Map<String, dynamic>.from(e));
+            } else {
+              return InformeMaterialItem(materialId: e.toString(), cantidad: 0.0, unidad: '');
+            }
+          }).toList();
+        }
+
         return InformeDiarioModel(
           id: row['id'],
           fecha: DateTime.parse(row['fecha']),
@@ -65,7 +77,7 @@ class InformeProvider extends ChangeNotifier {
           usuarioName: row['usuario_name'] ?? 'Desconocido',
           proveedoresIds: (row['proveedores_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
           maquinariasIds: (row['maquinarias_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-          materialesIds: (row['materiales_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+          materiales: materialesList,
           equiposIds: (row['equipos_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
           camionesIds: (row['camiones_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
           observaciones: row['observaciones'] ?? '',
@@ -87,11 +99,22 @@ class InformeProvider extends ChangeNotifier {
           .order('fecha', ascending: false);
 
       _adminInformesDiariosTrabajo = (responseTrabajo as List).map((row) {
-        final rawPersonal = row['personal_por_funcion'];
-        final Map<String, int> personalMap = {};
-        if (rawPersonal is Map) {
+        final rawPersonal = row['personal'] ?? row['personal_por_funcion'];
+        List<InformePersonalItem> personalList = [];
+        if (rawPersonal is List) {
+          personalList = rawPersonal.map((e) {
+            if (e is Map) {
+              return InformePersonalItem.fromJson(Map<String, dynamic>.from(e));
+            } else {
+              return InformePersonalItem(personalRoleId: e.toString(), horasTrabajadas: 0.0);
+            }
+          }).toList();
+        } else if (rawPersonal is Map) {
           rawPersonal.forEach((key, value) {
-            personalMap[key.toString()] = int.tryParse(value.toString()) ?? 0;
+            personalList.add(InformePersonalItem(
+              personalRoleId: key.toString(),
+              horasTrabajadas: (double.tryParse(value.toString()) ?? 0.0),
+            ));
           });
         }
 
@@ -103,7 +126,7 @@ class InformeProvider extends ChangeNotifier {
           usuarioName: row['usuario_name'] ?? 'Desconocido',
           tareasRealizadas: row['tareas_realizadas'] ?? '',
           horasTrabajadas: double.parse((row['horas_trabajadas'] ?? 0).toString()),
-          personalPorFuncion: personalMap,
+          personal: personalList,
           maquinariaIds: (row['maquinaria_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
           observaciones: row['observaciones'] ?? '',
           estado: RemitoStatus.sincronizado,
@@ -188,7 +211,7 @@ class InformeProvider extends ChangeNotifier {
             'usuario_name': inf.usuarioName,
             'proveedores_ids': inf.proveedoresIds,
             'maquinarias_ids': inf.maquinariasIds,
-            'materiales_ids': inf.materialesIds,
+            'materiales': inf.materiales.map((m) => m.toJson()).toList(),
             'equipos_ids': inf.equiposIds,
             'camiones_ids': inf.camionesIds,
             'observaciones': inf.observaciones,
@@ -206,7 +229,7 @@ class InformeProvider extends ChangeNotifier {
             usuarioName: inf.usuarioName,
             proveedoresIds: inf.proveedoresIds,
             maquinariasIds: inf.maquinariasIds,
-            materialesIds: inf.materialesIds,
+            materiales: inf.materiales,
             equiposIds: inf.equiposIds,
             camionesIds: inf.camionesIds,
             observaciones: inf.observaciones,
@@ -229,7 +252,7 @@ class InformeProvider extends ChangeNotifier {
             usuarioName: inf.usuarioName,
             proveedoresIds: inf.proveedoresIds,
             maquinariasIds: inf.maquinariasIds,
-            materialesIds: inf.materialesIds,
+            materiales: inf.materiales,
             equiposIds: inf.equiposIds,
             camionesIds: inf.camionesIds,
             observaciones: inf.observaciones,
@@ -282,7 +305,7 @@ class InformeProvider extends ChangeNotifier {
             'usuario_name': inf.usuarioName,
             'tareas_realizadas': inf.tareasRealizadas,
             'horas_trabajadas': inf.horasTrabajadas,
-            'personal_por_funcion': inf.personalPorFuncion,
+            'personal': inf.personal.map((p) => p.toJson()).toList(),
             'maquinaria_ids': inf.maquinariaIds,
             'observaciones': inf.observaciones,
             'estado': 'sincronizado',
@@ -299,7 +322,7 @@ class InformeProvider extends ChangeNotifier {
             usuarioName: inf.usuarioName,
             tareasRealizadas: inf.tareasRealizadas,
             horasTrabajadas: inf.horasTrabajadas,
-            personalPorFuncion: inf.personalPorFuncion,
+            personal: inf.personal,
             maquinariaIds: inf.maquinariaIds,
             observaciones: inf.observaciones,
             estado: RemitoStatus.sincronizado,
@@ -321,7 +344,7 @@ class InformeProvider extends ChangeNotifier {
             usuarioName: inf.usuarioName,
             tareasRealizadas: inf.tareasRealizadas,
             horasTrabajadas: inf.horasTrabajadas,
-            personalPorFuncion: inf.personalPorFuncion,
+            personal: inf.personal,
             maquinariaIds: inf.maquinariaIds,
             observaciones: inf.observaciones,
             estado: RemitoStatus.error,

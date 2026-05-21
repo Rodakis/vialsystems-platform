@@ -1,5 +1,37 @@
 import '../../../../features/remito/domain/models/remito_model.dart';
 
+class InformeMaterialItem {
+  final String materialId;
+  final double cantidad;
+  final String unidad;
+  final String? observacion;
+
+  InformeMaterialItem({
+    required this.materialId,
+    required this.cantidad,
+    required this.unidad,
+    this.observacion,
+  });
+
+  factory InformeMaterialItem.fromJson(Map<String, dynamic> json) {
+    return InformeMaterialItem(
+      materialId: json['material_id'] as String? ?? json['materialId'] as String? ?? '',
+      cantidad: (json['cantidad'] as num? ?? 0.0).toDouble(),
+      unidad: json['unidad'] as String? ?? '',
+      observacion: json['observacion'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'material_id': materialId,
+      'cantidad': cantidad,
+      'unidad': unidad,
+      'observacion': observacion,
+    };
+  }
+}
+
 class InformeDiarioModel {
   final String id;
   final DateTime fecha;
@@ -8,7 +40,7 @@ class InformeDiarioModel {
   final String usuarioName;
   final List<String> proveedoresIds;
   final List<String> maquinariasIds;
-  final List<String> materialesIds;
+  final List<InformeMaterialItem> materiales;
   final List<String> equiposIds;
   final List<String> camionesIds;
   final String observaciones;
@@ -23,7 +55,7 @@ class InformeDiarioModel {
     required this.usuarioName,
     required this.proveedoresIds,
     required this.maquinariasIds,
-    required this.materialesIds,
+    required this.materiales,
     required this.equiposIds,
     required this.camionesIds,
     required this.observaciones,
@@ -32,6 +64,19 @@ class InformeDiarioModel {
   });
 
   factory InformeDiarioModel.fromJson(Map<String, dynamic> json) {
+    final rawMateriales = json['materiales'] ?? json['materiales_ids'];
+    List<InformeMaterialItem> materialesList = [];
+    if (rawMateriales is List) {
+      materialesList = rawMateriales.map((e) {
+        if (e is Map) {
+          return InformeMaterialItem.fromJson(e as Map<String, dynamic>);
+        } else {
+          // Fallback en caso de que viniera solo String ID en versiones anteriores
+          return InformeMaterialItem(materialId: e.toString(), cantidad: 0.0, unidad: '');
+        }
+      }).toList();
+    }
+
     return InformeDiarioModel(
       id: json['id'] as String,
       fecha: DateTime.parse(json['fecha'] as String),
@@ -46,10 +91,7 @@ class InformeDiarioModel {
               ?.map((e) => e.toString())
               .toList() ??
           [],
-      materialesIds: (json['materialesIds'] ?? json['materiales_ids'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
+      materiales: materialesList,
       equiposIds: (json['equiposIds'] ?? json['equipos_ids'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
@@ -79,7 +121,7 @@ class InformeDiarioModel {
       'usuarioName': usuarioName,
       'proveedoresIds': proveedoresIds,
       'maquinariasIds': maquinariasIds,
-      'materialesIds': materialesIds,
+      'materiales': materiales.map((m) => m.toJson()).toList(),
       'equiposIds': equiposIds,
       'camionesIds': camionesIds,
       'observaciones': observaciones,

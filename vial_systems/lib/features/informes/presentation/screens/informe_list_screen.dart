@@ -143,7 +143,7 @@ class InformeListScreen extends StatelessWidget {
         final iconColor = _getStatusColor(inf.estado);
         final totalItems = inf.proveedoresIds.length +
             inf.maquinariasIds.length +
-            inf.materialesIds.length +
+            inf.materiales.length +
             inf.equiposIds.length +
             inf.camionesIds.length;
 
@@ -207,7 +207,7 @@ class InformeListScreen extends StatelessWidget {
         
         final iconData = _getStatusIcon(inf.estado);
         final iconColor = _getStatusColor(inf.estado);
-        final totalPersonal = inf.personalPorFuncion.values.fold(0, (sum, val) => sum + val);
+        final totalPersonal = inf.personal.length;
 
         return Card(
           elevation: 2,
