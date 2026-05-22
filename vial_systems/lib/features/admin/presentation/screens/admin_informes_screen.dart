@@ -520,7 +520,7 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
                   const SizedBox(height: 8),
                   const Text('Personal:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
                   const SizedBox(height: 6),
-                  _buildPersonalTable(inf.personal, catalogs.funcionesPersonal),
+                  _buildPersonalTable(inf.personal, catalogs.empleados, catalogs.funcionesPersonal),
                   const SizedBox(height: 12),
                   _buildCatalogSection('Maquinaria Utilizada:', inf.maquinariaIds, catalogs.maquinarias),
                   const Divider(),
@@ -782,7 +782,11 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
     );
   }
 
-  Widget _buildPersonalTable(List<InformePersonalItem> personalList, List<OperativeCatalogItem> catalogItems) {
+  Widget _buildPersonalTable(
+    List<InformePersonalItem> personalList,
+    List<OperativeCatalogItem> empleados,
+    List<OperativeCatalogItem> funciones,
+  ) {
     if (personalList.isEmpty) {
       return const Text('Ninguno', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey, fontSize: 13));
     }
@@ -797,6 +801,7 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
         columnWidths: const {
           0: FlexColumnWidth(4),
           1: FlexColumnWidth(3),
+          2: FlexColumnWidth(2),
         },
         border: TableBorder.symmetric(inside: BorderSide(color: Colors.grey.shade200, width: 1)),
         children: [
@@ -807,21 +812,36 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
             children: const [
               Padding(
                 padding: EdgeInsets.all(8.0),
-                child: Text('Rol / Función', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue)),
+                child: Text('Empleado', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue)),
               ),
               Padding(
                 padding: EdgeInsets.all(8.0),
-                child: Text('Horas Trabajadas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue)),
+                child: Text('Función / Rol', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue)),
+              ),
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Horas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue)),
               ),
             ],
           ),
           ...personalList.map((p) {
-            final item = catalogItems.firstWhere((x) => x.id == p.personalRoleId, orElse: () => OperativeCatalogItem(id: p.personalRoleId, nombre: 'Rol ID: ${p.personalRoleId}'));
+            final emp = empleados.firstWhere(
+              (x) => x.id == p.empleadoId,
+              orElse: () => OperativeCatalogItem(id: p.empleadoId, nombre: 'Empleado Desconocido'),
+            );
+            final func = funciones.firstWhere(
+              (x) => x.id == p.funcionId,
+              orElse: () => OperativeCatalogItem(id: p.funcionId, nombre: 'Función Desconocida'),
+            );
             return TableRow(
               children: [
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(item.nombre, style: const TextStyle(fontSize: 12)),
+                  child: Text(emp.nombreCompleto, style: const TextStyle(fontSize: 12)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(func.nombre, style: const TextStyle(fontSize: 12)),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),

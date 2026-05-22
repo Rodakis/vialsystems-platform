@@ -69,7 +69,7 @@ class InformeDiarioModel {
     if (rawMateriales is List) {
       materialesList = rawMateriales.map((e) {
         if (e is Map) {
-          return InformeMaterialItem.fromJson(e as Map<String, dynamic>);
+          return InformeMaterialItem.fromJson(Map<String, dynamic>.from(e));
         } else {
           // Fallback en caso de que viniera solo String ID en versiones anteriores
           return InformeMaterialItem(materialId: e.toString(), cantidad: 0.0, unidad: '');
@@ -83,29 +83,25 @@ class InformeDiarioModel {
       obraId: json['obraId'] as String?,
       usuarioId: json['usuarioId'] as String? ?? '',
       usuarioName: json['usuarioName'] as String? ?? 'Desconocido',
-      proveedoresIds: (json['proveedoresIds'] ?? json['proveedores_ids'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
-      maquinariasIds: (json['maquinariasIds'] ?? json['maquinarias_ids'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
+      proveedoresIds: (json['proveedoresIds'] as List? ?? json['proveedores_ids'] as List? ?? [])
+              .map((e) => e.toString())
+              .toList(),
+      maquinariasIds: (json['maquinariasIds'] as List? ?? json['maquinarias_ids'] as List? ?? [])
+              .map((e) => e.toString())
+              .toList(),
       materiales: materialesList,
-      equiposIds: (json['equiposIds'] ?? json['equipos_ids'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
-      camionesIds: (json['camionesIds'] ?? json['camiones_ids'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
+      equiposIds: (json['equiposIds'] as List? ?? json['equipos_ids'] as List? ?? [])
+              .map((e) => e.toString())
+              .toList(),
+      camionesIds: (json['camionesIds'] as List? ?? json['camiones_ids'] as List? ?? [])
+              .map((e) => e.toString())
+              .toList(),
       observaciones: json['observaciones'] as String? ?? '',
       estado: RemitoStatus.values.firstWhere(
         (e) => e.name == json['estado'],
         orElse: () => RemitoStatus.borrador,
       ),
-      fotos: (json['fotos'] as List<dynamic>?)
+      fotos: (json['fotos'] as List?)
               ?.map((e) => RemitoFotoModel.fromString(e.toString()))
               .toList() ??
           [],

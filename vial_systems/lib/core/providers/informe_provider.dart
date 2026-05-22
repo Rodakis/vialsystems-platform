@@ -75,14 +75,14 @@ class InformeProvider extends ChangeNotifier {
           obraId: row['obra_id'],
           usuarioId: row['usuario_id'] ?? '',
           usuarioName: row['usuario_name'] ?? 'Desconocido',
-          proveedoresIds: (row['proveedores_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-          maquinariasIds: (row['maquinarias_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+          proveedoresIds: (row['proveedores_ids'] as List?)?.map((e) => e.toString()).toList() ?? [],
+          maquinariasIds: (row['maquinarias_ids'] as List?)?.map((e) => e.toString()).toList() ?? [],
           materiales: materialesList,
-          equiposIds: (row['equipos_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-          camionesIds: (row['camiones_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+          equiposIds: (row['equipos_ids'] as List?)?.map((e) => e.toString()).toList() ?? [],
+          camionesIds: (row['camiones_ids'] as List?)?.map((e) => e.toString()).toList() ?? [],
           observaciones: row['observaciones'] ?? '',
           estado: RemitoStatus.sincronizado,
-          fotos: (row['fotos'] as List<dynamic>?)
+          fotos: (row['fotos'] as List?)
                   ?.map((e) => RemitoFotoModel.fromString(e.toString()))
                   .toList() ??
               [],
@@ -106,13 +106,14 @@ class InformeProvider extends ChangeNotifier {
             if (e is Map) {
               return InformePersonalItem.fromJson(Map<String, dynamic>.from(e));
             } else {
-              return InformePersonalItem(personalRoleId: e.toString(), horasTrabajadas: 0.0);
+              return InformePersonalItem(empleadoId: '', funcionId: e.toString(), horasTrabajadas: 0.0);
             }
           }).toList();
         } else if (rawPersonal is Map) {
           rawPersonal.forEach((key, value) {
             personalList.add(InformePersonalItem(
-              personalRoleId: key.toString(),
+              empleadoId: '',
+              funcionId: key.toString(),
               horasTrabajadas: (double.tryParse(value.toString()) ?? 0.0),
             ));
           });
@@ -127,10 +128,10 @@ class InformeProvider extends ChangeNotifier {
           tareasRealizadas: row['tareas_realizadas'] ?? '',
           horasTrabajadas: double.parse((row['horas_trabajadas'] ?? 0).toString()),
           personal: personalList,
-          maquinariaIds: (row['maquinaria_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+          maquinariaIds: (row['maquinaria_ids'] as List?)?.map((e) => e.toString()).toList() ?? [],
           observaciones: row['observaciones'] ?? '',
           estado: RemitoStatus.sincronizado,
-          fotos: (row['fotos'] as List<dynamic>?)
+          fotos: (row['fotos'] as List?)
                   ?.map((e) => RemitoFotoModel.fromString(e.toString()))
                   .toList() ??
               [],

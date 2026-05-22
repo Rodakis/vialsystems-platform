@@ -20,6 +20,7 @@ class CatalogProvider extends ChangeNotifier {
   List<OperativeCatalogItem> _otrosEquipos = [];
   List<OperativeCatalogItem> _camionesInternos = [];
   List<OperativeCatalogItem> _funcionesPersonal = [];
+  List<OperativeCatalogItem> _empleados = [];
 
   bool _isLoading = false;
 
@@ -43,6 +44,7 @@ class CatalogProvider extends ChangeNotifier {
   List<OperativeCatalogItem> get otrosEquipos => _otrosEquipos;
   List<OperativeCatalogItem> get camionesInternos => _camionesInternos;
   List<OperativeCatalogItem> get funcionesPersonal => _funcionesPersonal;
+  List<OperativeCatalogItem> get empleados => _empleados;
 
   Future<void> loadAll() async {
     _isLoading = true;
@@ -62,6 +64,7 @@ class CatalogProvider extends ChangeNotifier {
     _otrosEquipos = await _repository.getOtrosEquipos();
     _camionesInternos = await _repository.getCamionesInternos();
     _funcionesPersonal = await _repository.getFuncionesPersonal();
+    _empleados = await _repository.getEmpleados();
 
     _isLoading = false;
     notifyListeners();
@@ -262,5 +265,45 @@ class CatalogProvider extends ChangeNotifier {
   Future<void> toggleFuncionPersonalStatus(OperativeCatalogItem item) async {
     final updated = OperativeCatalogItem(id: item.id, nombre: item.nombre, activa: !item.activa);
     await updateFuncionPersonal(updated);
+  }
+
+  // Personal / Empleados
+  Future<void> addEmpleado(
+    String nombre, {
+    String? apellido,
+    String? identificador,
+    String? telefono,
+  }) async {
+    final item = OperativeCatalogItem(
+      id: const Uuid().v4(),
+      nombre: nombre,
+      apellido: apellido,
+      identificador: identificador,
+      telefono: telefono,
+    );
+    await _repository.addEmpleado(item);
+    _empleados.add(item);
+    notifyListeners();
+  }
+
+  Future<void> updateEmpleado(OperativeCatalogItem updated) async {
+    await _repository.updateEmpleado(updated);
+    final index = _empleados.indexWhere((x) => x.id == updated.id);
+    if (index >= 0) {
+      _empleados[index] = updated;
+      notifyListeners();
+    }
+  }
+
+  Future<void> toggleEmpleadoStatus(OperativeCatalogItem item) async {
+    final updated = OperativeCatalogItem(
+      id: item.id,
+      nombre: item.nombre,
+      apellido: item.apellido,
+      identificador: item.identificador,
+      telefono: item.telefono,
+      activa: !item.activa,
+    );
+    await updateEmpleado(updated);
   }
 }

@@ -18,7 +18,7 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
+    _tabController = TabController(length: 7, vsync: this);
   }
 
   @override
@@ -58,10 +58,11 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
             tabs: const [
               Tab(text: 'Proveedores'),
               Tab(text: 'Maquinaria'),
-              Tab(text: 'Control Materiales'),
+              Tab(text: 'Materiales'),
               Tab(text: 'Otros Equipos'),
               Tab(text: 'Camiones Internos'),
-              Tab(text: 'Personal'),
+              Tab(text: 'Personal / Empleados'),
+              Tab(text: 'Funciones / Roles'),
             ],
           ),
         ),
@@ -72,21 +73,21 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
               _buildCatalogTab(
                 title: 'Proveedores de Servicio',
                 items: catalogProvider.proveedores,
-                onAdd: (nombre, [unidad]) => catalogProvider.addProveedor(nombre),
+                onAdd: (nombre, [unidad, apellido, identificador, tel]) => catalogProvider.addProveedor(nombre),
                 onEdit: (item) => catalogProvider.updateProveedor(item),
                 onToggle: (item) => catalogProvider.toggleProveedorStatus(item),
               ),
               _buildCatalogTab(
                 title: 'Maquinaria de Obra',
                 items: catalogProvider.maquinarias,
-                onAdd: (nombre, [unidad]) => catalogProvider.addMaquinaria(nombre),
+                onAdd: (nombre, [unidad, apellido, identificador, tel]) => catalogProvider.addMaquinaria(nombre),
                 onEdit: (item) => catalogProvider.updateMaquinaria(item),
                 onToggle: (item) => catalogProvider.toggleMaquinariaStatus(item),
               ),
               _buildCatalogTab(
                 title: 'Control de Materiales',
                 items: catalogProvider.materialesControl,
-                onAdd: (nombre, [unidad]) => catalogProvider.addMaterialControl(nombre, unidadDefault: unidad),
+                onAdd: (nombre, [unidad, apellido, identificador, tel]) => catalogProvider.addMaterialControl(nombre, unidadDefault: unidad),
                 onEdit: (item) => catalogProvider.updateMaterialControl(item),
                 onToggle: (item) => catalogProvider.toggleMaterialControlStatus(item),
                 isMaterial: true,
@@ -94,21 +95,30 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
               _buildCatalogTab(
                 title: 'Otros Equipos',
                 items: catalogProvider.otrosEquipos,
-                onAdd: (nombre, [unidad]) => catalogProvider.addOtroEquipo(nombre),
+                onAdd: (nombre, [unidad, apellido, identificador, tel]) => catalogProvider.addOtroEquipo(nombre),
                 onEdit: (item) => catalogProvider.updateOtroEquipo(item),
                 onToggle: (item) => catalogProvider.toggleOtroEquipoStatus(item),
               ),
               _buildCatalogTab(
                 title: 'Camiones Internos',
                 items: catalogProvider.camionesInternos,
-                onAdd: (nombre, [unidad]) => catalogProvider.addCamionInterno(nombre),
+                onAdd: (nombre, [unidad, apellido, identificador, tel]) => catalogProvider.addCamionInterno(nombre),
                 onEdit: (item) => catalogProvider.updateCamionInterno(item),
                 onToggle: (item) => catalogProvider.toggleCamionInternoStatus(item),
               ),
               _buildCatalogTab(
-                title: 'Personal',
+                title: 'Personal / Empleados',
+                items: catalogProvider.empleados,
+                onAdd: (nombre, [unidad, apellido, identificador, tel]) =>
+                    catalogProvider.addEmpleado(nombre, apellido: apellido, identificador: identificador, telefono: tel),
+                onEdit: (item) => catalogProvider.updateEmpleado(item),
+                onToggle: (item) => catalogProvider.toggleEmpleadoStatus(item),
+                isEmpleado: true,
+              ),
+              _buildCatalogTab(
+                title: 'Funciones / Roles',
                 items: catalogProvider.funcionesPersonal,
-                onAdd: (nombre, [unidad]) => catalogProvider.addFuncionPersonal(nombre),
+                onAdd: (nombre, [unidad, apellido, identificador, tel]) => catalogProvider.addFuncionPersonal(nombre),
                 onEdit: (item) => catalogProvider.updateFuncionPersonal(item),
                 onToggle: (item) => catalogProvider.toggleFuncionPersonalStatus(item),
               ),
@@ -122,10 +132,11 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
   Widget _buildCatalogTab({
     required String title,
     required List<OperativeCatalogItem> items,
-    required Future<void> Function(String, [String?]) onAdd,
+    required Future<void> Function(String, [String?, String?, String?, String?]) onAdd,
     required Future<void> Function(OperativeCatalogItem) onEdit,
     required Future<void> Function(OperativeCatalogItem) onToggle,
     bool isMaterial = false,
+    bool isEmpleado = false,
   }) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -156,7 +167,7 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                onPressed: () => _showAddDialog(title, onAdd, isMaterial: isMaterial),
+                onPressed: () => _showAddDialog(title, onAdd, isMaterial: isMaterial, isEmpleado: isEmpleado),
               ),
             ],
           ),
@@ -188,7 +199,7 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
                         return ListTile(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                           title: Text(
-                            item.nombre,
+                            isEmpleado ? item.nombreCompleto : item.nombre,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
@@ -198,31 +209,60 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
                           ),
                           subtitle: Container(
                             margin: const EdgeInsets.only(top: 4),
-                            child: Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(
-                                  item.activa ? Icons.circle : Icons.circle_outlined,
-                                  size: 10,
-                                  color: item.activa ? Colors.green : Colors.grey,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  item.activa ? 'Activo' : 'Inactivo (Soft-deleted)',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: item.activa ? Colors.green[700] : Colors.grey[600],
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                if (isMaterial && item.unidadDefault != null) ...[
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '•  Unidad: ${item.unidadDefault}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                      fontWeight: FontWeight.bold,
+                                Row(
+                                  children: [
+                                    Icon(
+                                      item.activa ? Icons.circle : Icons.circle_outlined,
+                                      size: 10,
+                                      color: item.activa ? Colors.green : Colors.grey,
                                     ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      item.activa ? 'Activo' : 'Inactivo (Soft-deleted)',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: item.activa ? Colors.green[700] : Colors.grey[600],
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    if (isMaterial && item.unidadDefault != null) ...[
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '•  Unidad: ${item.unidadDefault}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                if (isEmpleado && (item.identificador != null && item.identificador!.isNotEmpty || item.telefono != null && item.telefono!.isNotEmpty)) ...[
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      if (item.identificador != null && item.identificador!.isNotEmpty) ...[
+                                        Icon(Icons.badge_outlined, size: 12, color: Colors.grey[600]),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Legajo/DNI: ${item.identificador}',
+                                          style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                                        ),
+                                        const SizedBox(width: 10),
+                                      ],
+                                      if (item.telefono != null && item.telefono!.isNotEmpty) ...[
+                                        Icon(Icons.phone_outlined, size: 12, color: Colors.grey[600]),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Tel: ${item.telefono}',
+                                          style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ],
                               ],
@@ -233,8 +273,8 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
                             children: [
                               IconButton(
                                 icon: const Icon(Icons.edit_outlined, color: Colors.blue),
-                                tooltip: 'Editar Nombre',
-                                onPressed: () => _showEditDialog(item, onEdit, isMaterial: isMaterial),
+                                tooltip: 'Editar Elemento',
+                                onPressed: () => _showEditDialog(item, onEdit, isMaterial: isMaterial, isEmpleado: isEmpleado),
                               ),
                               Switch(
                                 value: item.activa,
@@ -266,8 +306,16 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
     );
   }
 
-  void _showAddDialog(String catalogTitle, Future<void> Function(String, [String?]) onSave, {bool isMaterial = false}) {
-    final txtController = TextEditingController();
+  void _showAddDialog(
+    String catalogTitle,
+    Future<void> Function(String, [String?, String?, String?, String?]) onSave, {
+    bool isMaterial = false,
+    bool isEmpleado = false,
+  }) {
+    final txtController = TextEditingController(); // Nombre
+    final apellidoController = TextEditingController();
+    final identificadorController = TextEditingController();
+    final telefonoController = TextEditingController();
     String? selectedUnidad = 'm³';
     showDialog(
       context: context,
@@ -282,14 +330,47 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
                 children: [
                   TextField(
                     controller: txtController,
-                    decoration: const InputDecoration(
-                      hintText: 'Ej. Nombre o descripción...',
-                      labelText: 'Nombre / Descripción',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: InputDecoration(
+                      hintText: isEmpleado ? 'Ej. Juan' : 'Ej. Nombre o descripción...',
+                      labelText: isEmpleado ? 'Nombre' : 'Nombre / Descripción',
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                     autofocus: true,
                   ),
+                  if (isEmpleado) ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: apellidoController,
+                      decoration: const InputDecoration(
+                        hintText: 'Ej. Pérez',
+                        labelText: 'Apellido',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: identificadorController,
+                      decoration: const InputDecoration(
+                        hintText: 'Ej. Legajo o DNI',
+                        labelText: 'Identificador / Documento (Opcional)',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: telefonoController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        hintText: 'Ej. +54911...',
+                        labelText: 'Teléfono (Opcional)',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                  ],
                   if (isMaterial) ...[
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
@@ -328,6 +409,14 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
                   try {
                     if (isMaterial) {
                       await onSave(val, selectedUnidad);
+                    } else if (isEmpleado) {
+                      await onSave(
+                        val,
+                        null,
+                        apellidoController.text.trim(),
+                        identificadorController.text.trim(),
+                        telefonoController.text.trim(),
+                      );
                     } else {
                       await onSave(val);
                     }
@@ -352,8 +441,16 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
     );
   }
 
-  void _showEditDialog(OperativeCatalogItem item, Future<void> Function(OperativeCatalogItem) onSave, {bool isMaterial = false}) {
+  void _showEditDialog(
+    OperativeCatalogItem item,
+    Future<void> Function(OperativeCatalogItem) onSave, {
+    bool isMaterial = false,
+    bool isEmpleado = false,
+  }) {
     final txtController = TextEditingController(text: item.nombre);
+    final apellidoController = TextEditingController(text: item.apellido ?? '');
+    final identificadorController = TextEditingController(text: item.identificador ?? '');
+    final telefonoController = TextEditingController(text: item.telefono ?? '');
     String? selectedUnidad = item.unidadDefault ?? 'm³';
     showDialog(
       context: context,
@@ -368,14 +465,47 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
                 children: [
                   TextField(
                     controller: txtController,
-                    decoration: const InputDecoration(
-                      hintText: 'Editar nombre...',
-                      labelText: 'Nombre / Descripción',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: InputDecoration(
+                      hintText: isEmpleado ? 'Editar nombre...' : 'Ej. Nombre o descripción...',
+                      labelText: isEmpleado ? 'Nombre' : 'Nombre / Descripción',
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                     autofocus: true,
                   ),
+                  if (isEmpleado) ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: apellidoController,
+                      decoration: const InputDecoration(
+                        hintText: 'Ej. Pérez',
+                        labelText: 'Apellido',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: identificadorController,
+                      decoration: const InputDecoration(
+                        hintText: 'Ej. Legajo o DNI',
+                        labelText: 'Identificador / Documento (Opcional)',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: telefonoController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        hintText: 'Ej. +54911...',
+                        labelText: 'Teléfono (Opcional)',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                  ],
                   if (isMaterial) ...[
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
@@ -417,6 +547,9 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
                       nombre: val,
                       activa: item.activa,
                       unidadDefault: isMaterial ? selectedUnidad : item.unidadDefault,
+                      apellido: isEmpleado ? apellidoController.text.trim() : item.apellido,
+                      identificador: isEmpleado ? identificadorController.text.trim() : item.identificador,
+                      telefono: isEmpleado ? telefonoController.text.trim() : item.telefono,
                     );
                     await onSave(updatedItem);
                     if (context.mounted) Navigator.pop(context);

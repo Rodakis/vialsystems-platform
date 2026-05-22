@@ -16,6 +16,7 @@ class LocalCatalogRepository implements CatalogRepository {
   final String _otrosEquiposKey = 'otros_equipos_data';
   final String _camionesInternosKey = 'camiones_internos_data';
   final String _funcionesPersonalKey = 'funciones_personal_data';
+  final String _personalEmpleadosKey = 'personal_empleados_data';
 
   Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
 
@@ -233,6 +234,27 @@ class LocalCatalogRepository implements CatalogRepository {
     if (index >= 0) {
       list[index] = item;
       await _saveList(_funcionesPersonalKey, list, (o) => o.toJson());
+    }
+  }
+
+  // Personal / Empleados
+  @override
+  Future<List<OperativeCatalogItem>> getEmpleados() => _getList(_personalEmpleadosKey, OperativeCatalogItem.fromJson);
+
+  @override
+  Future<void> addEmpleado(OperativeCatalogItem item) async {
+    final list = await getEmpleados();
+    list.add(item);
+    await _saveList(_personalEmpleadosKey, list, (o) => o.toJson());
+  }
+
+  @override
+  Future<void> updateEmpleado(OperativeCatalogItem item) async {
+    final list = await getEmpleados();
+    final index = list.indexWhere((o) => o.id == item.id);
+    if (index >= 0) {
+      list[index] = item;
+      await _saveList(_personalEmpleadosKey, list, (o) => o.toJson());
     }
   }
 }

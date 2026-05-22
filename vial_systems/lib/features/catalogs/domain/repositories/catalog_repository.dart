@@ -49,4 +49,9 @@ abstract class CatalogRepository {
   Future<List<OperativeCatalogItem>> getFuncionesPersonal();
   Future<void> addFuncionPersonal(OperativeCatalogItem item);
   Future<void> updateFuncionPersonal(OperativeCatalogItem item);
+
+  // Personal / Empleados
+  Future<List<OperativeCatalogItem>> getEmpleados();
+  Future<void> addEmpleado(OperativeCatalogItem item);
+  Future<void> updateEmpleado(OperativeCatalogItem item);
 }

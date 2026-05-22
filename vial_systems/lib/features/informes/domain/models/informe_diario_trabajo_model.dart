@@ -1,19 +1,22 @@
 import '../../../../features/remito/domain/models/remito_model.dart';
 
 class InformePersonalItem {
-  final String personalRoleId;
+  final String empleadoId;
+  final String funcionId;
   final double horasTrabajadas;
   final String? observacion;
 
   InformePersonalItem({
-    required this.personalRoleId,
+    required this.empleadoId,
+    required this.funcionId,
     required this.horasTrabajadas,
     this.observacion,
   });
 
   factory InformePersonalItem.fromJson(Map<String, dynamic> json) {
     return InformePersonalItem(
-      personalRoleId: json['personal_role_id'] as String? ?? json['personalRoleId'] as String? ?? '',
+      empleadoId: (json['empleado_id'] ?? json['empleadoId'] ?? '') as String,
+      funcionId: (json['funcion_id'] ?? json['funcionId'] ?? json['personal_role_id'] ?? json['personalRoleId'] ?? '') as String,
       horasTrabajadas: (json['horas_trabajadas'] as num? ?? json['horasTrabajadas'] as num? ?? 0.0).toDouble(),
       observacion: json['observacion'] as String?,
     );
@@ -21,7 +24,8 @@ class InformePersonalItem {
 
   Map<String, dynamic> toJson() {
     return {
-      'personal_role_id': personalRoleId,
+      'empleado_id': empleadoId,
+      'funcion_id': funcionId,
       'horas_trabajadas': horasTrabajadas,
       'observacion': observacion,
     };
@@ -63,16 +67,17 @@ class InformeDiarioTrabajoModel {
     if (rawPersonal is List) {
       personalList = rawPersonal.map((e) {
         if (e is Map) {
-          return InformePersonalItem.fromJson(e as Map<String, dynamic>);
+          return InformePersonalItem.fromJson(Map<String, dynamic>.from(e));
         } else {
-          return InformePersonalItem(personalRoleId: e.toString(), horasTrabajadas: 0.0);
+          return InformePersonalItem(empleadoId: '', funcionId: e.toString(), horasTrabajadas: 0.0);
         }
       }).toList();
     } else if (rawPersonal is Map) {
       // Compatibilidad con versiones anteriores que usaban Map<String, int>
       rawPersonal.forEach((key, value) {
         personalList.add(InformePersonalItem(
-          personalRoleId: key.toString(),
+          empleadoId: '',
+          funcionId: key.toString(),
           horasTrabajadas: (double.tryParse(value.toString()) ?? 0.0),
         ));
       });
@@ -87,16 +92,15 @@ class InformeDiarioTrabajoModel {
       tareasRealizadas: json['tareasRealizadas'] as String? ?? '',
       horasTrabajadas: (json['horasTrabajadas'] as num? ?? 0.0).toDouble(),
       personal: personalList,
-      maquinariaIds: (json['maquinariaIds'] ?? json['maquinaria_ids'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
+      maquinariaIds: (json['maquinariaIds'] as List? ?? json['maquinaria_ids'] as List? ?? [])
+              .map((e) => e.toString())
+              .toList(),
       observaciones: json['observaciones'] as String? ?? '',
       estado: RemitoStatus.values.firstWhere(
         (e) => e.name == json['estado'],
         orElse: () => RemitoStatus.borrador,
       ),
-      fotos: (json['fotos'] as List<dynamic>?)
+      fotos: (json['fotos'] as List?)
               ?.map((e) => RemitoFotoModel.fromString(e.toString()))
               .toList() ??
           [],

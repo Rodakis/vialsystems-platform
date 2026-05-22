@@ -215,7 +215,12 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
   }
 
   void _saveInforme(RemitoStatus estado) async {
-    final hasPersonalWithHours = _personal.any((p) => p.horasTrabajadas > 0);
+    final hasValidPersonal = _personal.isNotEmpty && _personal.every((p) => 
+      p.empleadoId.isNotEmpty && 
+      p.funcionId.isNotEmpty && 
+      p.horasTrabajadas > 0 && 
+      p.horasTrabajadas <= 24
+    );
 
     if (estado == RemitoStatus.listoParaEnviar) {
       if (_selectedObraId == null) {
@@ -233,10 +238,10 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
         );
         return;
       }
-      if (!hasPersonalWithHours) {
+      if (!hasValidPersonal) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Debe registrar al menos una persona con horas trabajadas mayores a 0 para enviar el reporte.'),
+            content: Text('Debe registrar al menos una persona, y todas las líneas de personal deben tener empleado, función y horas válidas (> 0 y <= 24).'),
             backgroundColor: Colors.red,
           ),
         );
@@ -403,7 +408,8 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
   }
 
   Widget _buildPersonalPanel({
-    required List<OperativeCatalogItem> activeCatalogItems,
+    required List<OperativeCatalogItem> activeEmpleados,
+    required List<OperativeCatalogItem> activeFunciones,
     required bool isReadOnly,
   }) {
     return Card(
@@ -444,25 +450,40 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _personal.length,
-                      separatorBuilder: (context, index) => const Divider(height: 20),
+                      separatorBuilder: (context, index) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final item = _personal[index];
 
-                        // Find selected catalog item to display name if read-only
-                        final catalogItem = activeCatalogItems.firstWhere(
-                          (c) => c.id == item.personalRoleId,
+                        final empleado = activeEmpleados.firstWhere(
+                          (e) => e.id == item.empleadoId,
+                          orElse: () => OperativeCatalogItem(id: '', nombre: 'Desconocido'),
+                        );
+                        final funcion = activeFunciones.firstWhere(
+                          (f) => f.id == item.funcionId,
                           orElse: () => OperativeCatalogItem(id: '', nombre: 'Desconocido'),
                         );
 
                         if (isReadOnly) {
                           return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            padding: const EdgeInsets.symmetric(vertical: 6.0),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  catalogItem.nombre,
-                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        empleado.nombreCompleto,
+                                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        funcion.nombre,
+                                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                                 Row(
                                   children: [
@@ -482,84 +503,146 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
                           );
                         }
 
-                        // Form controllers or local state change
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Dropdown Role
-                            Expanded(
-                              flex: 4,
-                              child: DropdownButtonFormField<String>(
+                        // Editable form row
+                        return Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Personal #${index + 1}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue.shade800,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                                    onPressed: () {
+                                      setState(() {
+                                        _personal.removeAt(index);
+                                      });
+                                    },
+                                    constraints: const BoxConstraints(),
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              // Dropdown Empleado
+                              DropdownButtonFormField<String>(
                                 isExpanded: true,
-                                initialValue: item.personalRoleId.isEmpty ? null : item.personalRoleId,
+                                initialValue: item.empleadoId.isEmpty ? null : item.empleadoId,
                                 decoration: const InputDecoration(
-                                  labelText: 'Rol / Función',
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                  border: OutlineInputBorder(),
+                                  labelText: 'Empleado *',
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+                                  prefixIcon: Icon(Icons.person, size: 20),
                                 ),
-                                items: activeCatalogItems.map((c) {
+                                items: activeEmpleados.where((e) => e.activa || e.id == item.empleadoId).map((e) {
                                   return DropdownMenuItem<String>(
-                                    value: c.id,
-                                    child: Text(c.nombre, overflow: TextOverflow.ellipsis),
+                                    value: e.id,
+                                    child: Text(e.nombreCompleto, overflow: TextOverflow.ellipsis),
                                   );
                                 }).toList(),
                                 onChanged: (val) {
                                   if (val != null) {
                                     setState(() {
                                       _personal[index] = InformePersonalItem(
-                                        personalRoleId: val,
+                                        empleadoId: val,
+                                        funcionId: item.funcionId,
                                         horasTrabajadas: item.horasTrabajadas,
                                         observacion: item.observacion,
                                       );
                                     });
                                   }
                                 },
-                                validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
+                                validator: (val) => val == null || val.isEmpty ? 'Seleccione empleado' : null,
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            // Horas input
-                            Expanded(
-                              flex: 3,
-                              child: TextFormField(
-                                initialValue: item.horasTrabajadas > 0 ? item.horasTrabajadas.toString() : '',
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                decoration: const InputDecoration(
-                                  labelText: 'Horas (hs)',
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                  border: OutlineInputBorder(),
-                                  hintText: 'e.g. 8',
-                                ),
-                                onChanged: (val) {
-                                  final hs = double.tryParse(val) ?? 0.0;
-                                  setState(() {
-                                    _personal[index] = InformePersonalItem(
-                                      personalRoleId: item.personalRoleId,
-                                      horasTrabajadas: hs,
-                                      observacion: item.observacion,
-                                    );
-                                  });
-                                },
-                                validator: (val) {
-                                  if (val == null || val.isEmpty) return 'Requerido';
-                                  final d = double.tryParse(val);
-                                  if (d == null) return 'Inválido';
-                                  if (d < 0) return 'Mínimo 0';
-                                  if (d > 24) return 'Máximo 24';
-                                  return null;
-                                },
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  // Dropdown Función
+                                  Expanded(
+                                    flex: 5,
+                                    child: DropdownButtonFormField<String>(
+                                      isExpanded: true,
+                                      initialValue: item.funcionId.isEmpty ? null : item.funcionId,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Función / Rol *',
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+                                        prefixIcon: Icon(Icons.work_outline, size: 20),
+                                      ),
+                                      items: activeFunciones.where((f) => f.activa || f.id == item.funcionId).map((f) {
+                                        return DropdownMenuItem<String>(
+                                          value: f.id,
+                                          child: Text(f.nombre, overflow: TextOverflow.ellipsis),
+                                        );
+                                      }).toList(),
+                                      onChanged: (val) {
+                                        if (val != null) {
+                                          setState(() {
+                                            _personal[index] = InformePersonalItem(
+                                              empleadoId: item.empleadoId,
+                                              funcionId: val,
+                                              horasTrabajadas: item.horasTrabajadas,
+                                              observacion: item.observacion,
+                                            );
+                                          });
+                                        }
+                                      },
+                                      validator: (val) => val == null || val.isEmpty ? 'Seleccione función' : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  // Horas
+                                  Expanded(
+                                    flex: 4,
+                                    child: TextFormField(
+                                      initialValue: item.horasTrabajadas > 0 ? item.horasTrabajadas.toString() : '',
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      decoration: const InputDecoration(
+                                        labelText: 'Horas *',
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+                                        prefixIcon: Icon(Icons.access_time, size: 20),
+                                        hintText: 'Ej. 8',
+                                      ),
+                                      onChanged: (val) {
+                                        final hs = double.tryParse(val) ?? 0.0;
+                                        setState(() {
+                                          _personal[index] = InformePersonalItem(
+                                            empleadoId: item.empleadoId,
+                                            funcionId: item.funcionId,
+                                            horasTrabajadas: hs,
+                                            observacion: item.observacion,
+                                          );
+                                        });
+                                      },
+                                      validator: (val) {
+                                        if (val == null || val.isEmpty) return 'Requerido';
+                                        final d = double.tryParse(val);
+                                        if (d == null) return 'Inválido';
+                                        if (d <= 0) return 'Mayor a 0';
+                                        if (d > 24) return 'Máximo 24';
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            // Delete button
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.red),
-                              onPressed: () {
-                                setState(() {
-                                  _personal.removeAt(index);
-                                });
-                              },
-                            ),
-                          ],
+                            ],
+                          ),
                         );
                       },
                     ),
@@ -569,7 +652,8 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
                       onPressed: () {
                         setState(() {
                           _personal.add(InformePersonalItem(
-                            personalRoleId: '',
+                            empleadoId: '',
+                            funcionId: '',
                             horasTrabajadas: 0.0,
                           ));
                         });
@@ -694,7 +778,8 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
 
               // Dynamic catalog personal list
               _buildPersonalPanel(
-                activeCatalogItems: catalogs.funcionesPersonal,
+                activeEmpleados: catalogs.empleados,
+                activeFunciones: catalogs.funcionesPersonal,
                 isReadOnly: isReadOnly,
               ),
               const SizedBox(height: 16),

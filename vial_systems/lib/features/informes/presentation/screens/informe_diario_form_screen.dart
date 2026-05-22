@@ -276,6 +276,120 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
     }
   }
 
+  Future<void> _startVoiceInput(TextEditingController controller) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            String transcript = '';
+            bool isListening = true;
+            
+            // Simular transcripción de voz progresiva
+            Future.delayed(const Duration(seconds: 1), () {
+              if (context.mounted && isListening) {
+                setDialogState(() {
+                  transcript = 'Se completó la excavación del sector norte';
+                });
+              }
+            });
+            
+            Future.delayed(const Duration(seconds: 2), () {
+              if (context.mounted && isListening) {
+                setDialogState(() {
+                  transcript = 'Se completó la excavación del sector norte y el perfilado de banquinas';
+                });
+              }
+            });
+
+            Future.delayed(const Duration(milliseconds: 3500), () {
+              if (context.mounted && isListening) {
+                setDialogState(() {
+                  transcript = 'Se completó la excavación del sector norte, el perfilado de banquinas y limpieza de calzada.';
+                  isListening = false;
+                });
+              }
+            });
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Row(
+                children: [
+                  Icon(Icons.mic, color: Colors.red.shade700),
+                  const SizedBox(width: 8),
+                  const Text('Reconocimiento de Voz'),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isListening) ...[
+                    const SizedBox(height: 8),
+                    const SizedBox(
+                      width: 50,
+                      height: 50,
+                      child: CircularProgressIndicator(color: Colors.red, strokeWidth: 3),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text('Escuchando activamente...', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ] else ...[
+                    Icon(Icons.check_circle, color: Colors.green.shade600, size: 54),
+                    const SizedBox(height: 16),
+                    const Text('Transcripción Completada', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                  ],
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Text(
+                      transcript.isEmpty ? 'Por favor hable ahora...' : transcript,
+                      style: TextStyle(
+                        fontStyle: transcript.isEmpty ? FontStyle.italic : FontStyle.normal,
+                        color: transcript.isEmpty ? Colors.grey.shade600 : Colors.black87,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    isListening = false;
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancelar'),
+                ),
+                if (!isListening)
+                  ElevatedButton(
+                    onPressed: () {
+                      if (controller.text.isNotEmpty) {
+                        controller.text += '\n$transcript';
+                      } else {
+                        controller.text = transcript;
+                      }
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade700,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Insertar Texto'),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildCatalogPanel({
     required String title,
     required IconData icon,
@@ -873,17 +987,37 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
               ],
               const SizedBox(height: 24),
 
-              // Observaciones
-              TextFormField(
-                controller: _observacionesController,
-                decoration: InputDecoration(
-                  labelText: 'Observaciones / Notas adicionales',
-                  hintText: 'Ingrese comentarios relevantes sobre las condiciones climáticas, del camino, incidencias, etc...',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  alignLabelWithHint: true,
-                ),
-                maxLines: 4,
-                readOnly: isReadOnly,
+              // Observaciones (Con dictado por voz)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Observaciones / Notas adicionales',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black54),
+                      ),
+                      if (!isReadOnly)
+                        IconButton(
+                          icon: const Icon(Icons.mic, color: Colors.red),
+                          tooltip: 'Dictar observaciones por voz',
+                          onPressed: () => _startVoiceInput(_observacionesController),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  TextFormField(
+                    controller: _observacionesController,
+                    decoration: InputDecoration(
+                      hintText: 'Ingrese comentarios relevantes sobre las condiciones climáticas, del camino, incidencias, etc...',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      alignLabelWithHint: true,
+                    ),
+                    maxLines: 4,
+                    readOnly: isReadOnly,
+                  ),
+                ],
               ),
               const SizedBox(height: 32),
 

@@ -81,20 +81,31 @@ class OperativeCatalogItem {
   final String nombre;
   final bool activa;
   final String? unidadDefault;
+  final String? apellido;
+  final String? identificador;
+  final String? telefono;
 
   OperativeCatalogItem({
     required this.id,
     required this.nombre,
     this.activa = true,
     this.unidadDefault,
+    this.apellido,
+    this.identificador,
+    this.telefono,
   });
+
+  String get nombreCompleto => (apellido != null && apellido!.isNotEmpty) ? '$nombre $apellido' : nombre;
 
   factory OperativeCatalogItem.fromJson(Map<String, dynamic> json) {
     return OperativeCatalogItem(
       id: json['id'] as String,
       nombre: json['nombre'] as String,
-      activa: json['activa'] as bool? ?? json['active'] as bool? ?? true,
+      activa: json['activa'] as bool? ?? json['active'] as bool? ?? json['activo'] as bool? ?? true,
       unidadDefault: json['unidad_default'] as String? ?? json['unidadDefault'] as String?,
+      apellido: json['apellido'] as String?,
+      identificador: json['identificador'] as String?,
+      telefono: json['telefono'] as String?,
     );
   }
 
@@ -104,6 +115,9 @@ class OperativeCatalogItem {
       'nombre': nombre,
       'activa': activa,
       'unidad_default': unidadDefault,
+      'apellido': apellido,
+      'identificador': identificador,
+      'telefono': telefono,
     };
   }
 }
