@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import '../../features/remito/domain/models/remito_model.dart';
 import '../../features/informes/domain/models/informe_diario_model.dart';
 import '../../features/informes/domain/models/informe_diario_trabajo_model.dart';
+import '../../features/auth/domain/models/user_model.dart';
 import 'remito_provider.dart';
 import 'informe_provider.dart';
+import 'catalog_provider.dart';
+import 'auth_provider.dart';
 
 enum NotificationSeverity {
   error,   // Red 🛑
@@ -14,6 +17,7 @@ enum NotificationSeverity {
 enum NotificationType {
   draft,
   syncError,
+  missingReport,
 }
 
 enum DocumentType {
@@ -29,7 +33,7 @@ class NotificationAlert {
   final NotificationSeverity severity;
   final NotificationType type;
   final DocumentType documentType;
-  final dynamic document; // RemitoModel, InformeDiarioModel, or InformeDiarioTrabajoModel
+  final dynamic document; // RemitoModel, InformeDiarioModel, InformeDiarioTrabajoModel, or ObraModel
 
   NotificationAlert({
     required this.id,
@@ -45,31 +49,49 @@ class NotificationAlert {
 class NotificationProvider extends ChangeNotifier {
   RemitoProvider _remitoProvider;
   InformeProvider _informeProvider;
+  CatalogProvider _catalogProvider;
+  AuthProvider _authProvider;
 
   List<NotificationAlert> _alerts = [];
   bool _isSyncing = false;
 
-  NotificationProvider(this._remitoProvider, this._informeProvider) {
+  NotificationProvider(this._remitoProvider, this._informeProvider, this._catalogProvider, this._authProvider) {
     _remitoProvider.addListener(_onProvidersChanged);
     _informeProvider.addListener(_onProvidersChanged);
+    _catalogProvider.addListener(_onProvidersChanged);
+    _authProvider.addListener(_onProvidersChanged);
     _calculateNotifications();
   }
 
   List<NotificationAlert> get alerts => _alerts;
   bool get isSyncing => _isSyncing;
+  
   int get activeAlertsCount => _alerts.length;
   int get errorAlertsCount => _alerts.where((a) => a.severity == NotificationSeverity.error).length;
   int get warningAlertsCount => _alerts.where((a) => a.severity == NotificationSeverity.warning).length;
+  int get infoAlertsCount => _alerts.where((a) => a.severity == NotificationSeverity.info).length;
 
-  void updateProviders(RemitoProvider remitoProvider, InformeProvider informeProvider) {
+  void updateProviders(
+    RemitoProvider remitoProvider,
+    InformeProvider informeProvider,
+    CatalogProvider catalogProvider,
+    AuthProvider authProvider,
+  ) {
     _remitoProvider.removeListener(_onProvidersChanged);
     _informeProvider.removeListener(_onProvidersChanged);
+    _catalogProvider.removeListener(_onProvidersChanged);
+    _authProvider.removeListener(_onProvidersChanged);
 
     _remitoProvider = remitoProvider;
     _informeProvider = informeProvider;
+    _catalogProvider = catalogProvider;
+    _authProvider = authProvider;
 
     _remitoProvider.addListener(_onProvidersChanged);
     _informeProvider.addListener(_onProvidersChanged);
+    _catalogProvider.addListener(_onProvidersChanged);
+    _authProvider.addListener(_onProvidersChanged);
+
     _calculateNotifications();
     notifyListeners();
   }
@@ -83,6 +105,8 @@ class NotificationProvider extends ChangeNotifier {
   void dispose() {
     _remitoProvider.removeListener(_onProvidersChanged);
     _informeProvider.removeListener(_onProvidersChanged);
+    _catalogProvider.removeListener(_onProvidersChanged);
+    _authProvider.removeListener(_onProvidersChanged);
     super.dispose();
   }
 
@@ -215,6 +239,57 @@ class NotificationProvider extends ChangeNotifier {
       }
     }
 
+    // 4. Scan active Obras for today's missing reports (ONLY FOR ADMINISTRATORS!)
+    final isAdmin = _authProvider.currentUser?.role == UserRole.administrador || 
+                    _authProvider.currentUser?.role == UserRole.oficina;
+
+    if (isAdmin) {
+      final today = DateTime.now();
+      for (var obra in _catalogProvider.obras) {
+        if (obra.activa) {
+          // Check if today has a registered InformeDiario for this obra
+          final hasDiarioToday = _informeProvider.informesDiarios.any((inf) =>
+              inf.obraId == obra.id &&
+              inf.fecha.year == today.year &&
+              inf.fecha.month == today.month &&
+              inf.fecha.day == today.day
+          );
+
+          if (!hasDiarioToday) {
+            tempAlerts.add(NotificationAlert(
+              id: 'missing_diario_${obra.id}_${today.year}_${today.month}_${today.day}',
+              title: 'Parte Diario Faltante',
+              message: 'Falta registrar el Informe Diario de hoy en la Obra: ${obra.nombre}',
+              severity: NotificationSeverity.info,
+              type: NotificationType.missingReport,
+              documentType: DocumentType.informeDiario,
+              document: obra,
+            ));
+          }
+
+          // Check if today has a registered InformeDiarioTrabajo for this obra
+          final hasTrabajoToday = _informeProvider.informesDiariosTrabajo.any((trab) =>
+              trab.obraId == obra.id &&
+              trab.fecha.year == today.year &&
+              trab.fecha.month == today.month &&
+              trab.fecha.day == today.day
+          );
+
+          if (!hasTrabajoToday) {
+            tempAlerts.add(NotificationAlert(
+              id: 'missing_trabajo_${obra.id}_${today.year}_${today.month}_${today.day}',
+              title: 'Diario de Trabajo Faltante',
+              message: 'Falta registrar el Diario de Trabajo de hoy en la Obra: ${obra.nombre}',
+              severity: NotificationSeverity.info,
+              type: NotificationType.missingReport,
+              documentType: DocumentType.diarioTrabajo,
+              document: obra,
+            ));
+          }
+        }
+      }
+    }
+
     _alerts = tempAlerts;
   }
 
@@ -226,7 +301,6 @@ class NotificationProvider extends ChangeNotifier {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
-      // 1. Classify drafts/pendings into Syncable vs Incomplete Drafts
       final syncableRemitos = <RemitoModel>[];
       final incompleteRemitos = <RemitoModel>[];
       for (var r in _remitoProvider.remitos) {
@@ -272,7 +346,6 @@ class NotificationProvider extends ChangeNotifier {
       final totalSyncable = syncableRemitos.length + syncableDiarios.length + syncableTrabajos.length;
       final totalIncomplete = incompleteRemitos.length + incompleteDiarios.length + incompleteTrabajos.length;
 
-      // 2. If nothing is syncable, check if there are incomplete drafts or nothing at all
       if (totalSyncable == 0) {
         _isSyncing = false;
         notifyListeners();
@@ -321,7 +394,6 @@ class NotificationProvider extends ChangeNotifier {
         return;
       }
 
-      // 3. Promote all complete drafts to listoParaEnviar and save them locally
       for (var r in syncableRemitos) {
         if (r.estado == RemitoStatus.borrador) {
           final updated = RemitoModel(
@@ -388,13 +460,11 @@ class NotificationProvider extends ChangeNotifier {
         }
       }
 
-      // 4. Run synchronization in parallel
       await Future.wait([
         _remitoProvider.syncQueue(),
         _informeProvider.syncQueue(),
       ]);
 
-      // 5. Re-scan lists to count results
       int synchronizedCount = 0;
       int failedCount = 0;
 

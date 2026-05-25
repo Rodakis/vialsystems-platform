@@ -4,6 +4,7 @@ import '../../../../core/providers/notification_provider.dart';
 import '../../../remito/presentation/screens/remito_form_screen.dart';
 import '../../../informes/presentation/screens/informe_diario_form_screen.dart';
 import '../../../informes/presentation/screens/informe_diario_trabajo_form_screen.dart';
+import '../../../catalogs/domain/models/catalog_models.dart';
 
 class NotificationCenterDrawer extends StatelessWidget {
   const NotificationCenterDrawer({super.key});
@@ -119,6 +120,15 @@ class NotificationCenterDrawer extends StatelessWidget {
                 provider.warningAlertsCount > 0 ? Colors.amber.shade100 : Colors.white24,
                 provider.warningAlertsCount > 0 ? Colors.amber.shade900 : Colors.white70,
               ),
+              if (provider.infoAlertsCount > 0) ...[
+                const SizedBox(width: 8),
+                _buildBadgeChip(
+                  context,
+                  '${provider.infoAlertsCount} Faltantes',
+                  Colors.blue.shade100,
+                  Colors.blue.shade900,
+                ),
+              ],
             ],
           ),
         ],
@@ -194,6 +204,27 @@ class NotificationCenterDrawer extends StatelessWidget {
       itemBuilder: (context, index) {
         final alert = alerts[index];
         final isError = alert.severity == NotificationSeverity.error;
+        final isMissing = alert.type == NotificationType.missingReport;
+
+        Color cardBorderColor = Colors.amber.shade200;
+        Color iconBgColor = Colors.amber.shade50;
+        Color iconColor = Colors.amber.shade800;
+        IconData iconData = Icons.edit_document;
+        Color titleColor = Colors.amber.shade900;
+
+        if (isError) {
+          cardBorderColor = Colors.red.shade100;
+          iconBgColor = Colors.red.shade50;
+          iconColor = Colors.red.shade700;
+          iconData = Icons.error_outline;
+          titleColor = Colors.red.shade900;
+        } else if (isMissing) {
+          cardBorderColor = Colors.blue.shade200;
+          iconBgColor = Colors.blue.shade50;
+          iconColor = Colors.blue.shade700;
+          iconData = Icons.calendar_today_outlined;
+          titleColor = Colors.blue.shade900;
+        }
 
         return Card(
           elevation: 2,
@@ -201,7 +232,7 @@ class NotificationCenterDrawer extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: isError ? Colors.red.shade100 : Colors.amber.shade200,
+              color: cardBorderColor,
               width: 1,
             ),
           ),
@@ -216,12 +247,12 @@ class NotificationCenterDrawer extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: isError ? Colors.red.shade50 : Colors.amber.shade50,
+                        color: iconBgColor,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        isError ? Icons.error_outline : Icons.edit_document,
-                        color: isError ? Colors.red.shade700 : Colors.amber.shade800,
+                        iconData,
+                        color: iconColor,
                         size: 24,
                       ),
                     ),
@@ -235,7 +266,7 @@ class NotificationCenterDrawer extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: isError ? Colors.red.shade900 : Colors.amber.shade900,
+                              color: titleColor,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -281,6 +312,21 @@ class NotificationCenterDrawer extends StatelessWidget {
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                      ),
+                    ] else if (isMissing) ...[
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context); // Close Drawer
+                          _openMissingFormScreen(context, alert);
+                        },
+                        icon: const Icon(Icons.add_task, size: 18),
+                        label: const Text('Crear'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue.shade700,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         ),
                       ),
                     ] else ...[
@@ -363,6 +409,26 @@ class NotificationCenterDrawer extends StatelessWidget {
           MaterialPageRoute(builder: (_) => InformeDiarioTrabajoFormScreen(informe: alert.document)),
         );
         break;
+    }
+  }
+
+  void _openMissingFormScreen(BuildContext context, NotificationAlert alert) {
+    final obraId = (alert.document as ObraModel).id;
+
+    if (alert.documentType == DocumentType.informeDiario) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => InformeDiarioFormScreen(preselectedObraId: obraId),
+        ),
+      );
+    } else if (alert.documentType == DocumentType.diarioTrabajo) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => InformeDiarioTrabajoFormScreen(preselectedObraId: obraId),
+        ),
+      );
     }
   }
 

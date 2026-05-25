@@ -13,8 +13,9 @@ import '../../domain/models/informe_diario_model.dart';
 
 class InformeDiarioFormScreen extends StatefulWidget {
   final InformeDiarioModel? informe;
+  final String? preselectedObraId;
 
-  const InformeDiarioFormScreen({super.key, this.informe});
+  const InformeDiarioFormScreen({super.key, this.informe, this.preselectedObraId});
 
   @override
   State<InformeDiarioFormScreen> createState() => _InformeDiarioFormScreenState();
@@ -53,6 +54,7 @@ class _InformeDiarioFormScreenState extends State<InformeDiarioFormScreen> {
       _camionesIds = List.from(inf.camionesIds);
     } else {
       _fecha = DateTime.now();
+      _selectedObraId = widget.preselectedObraId;
     }
   }
 

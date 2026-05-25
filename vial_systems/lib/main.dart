@@ -39,13 +39,20 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (_) => InformeProvider(LocalInformeRepository()),
         ),
-        ChangeNotifierProxyProvider2<RemitoProvider, InformeProvider, NotificationProvider>(
+        ChangeNotifierProxyProvider<CatalogProvider, NotificationProvider>(
           create: (context) => NotificationProvider(
             context.read<RemitoProvider>(),
             context.read<InformeProvider>(),
+            context.read<CatalogProvider>(),
+            context.read<AuthProvider>(),
           ),
-          update: (context, remitoProvider, informeProvider, notificationProvider) =>
-              notificationProvider!..updateProviders(remitoProvider, informeProvider),
+          update: (context, catalogProvider, notificationProvider) =>
+              notificationProvider!..updateProviders(
+                context.read<RemitoProvider>(),
+                context.read<InformeProvider>(),
+                catalogProvider,
+                context.read<AuthProvider>(),
+              ),
         ),
       ],
       child: const VialSystemsApp(),

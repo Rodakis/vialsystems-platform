@@ -13,8 +13,9 @@ import '../../../../features/catalogs/domain/models/catalog_models.dart';
 
 class InformeDiarioTrabajoFormScreen extends StatefulWidget {
   final InformeDiarioTrabajoModel? informe;
+  final String? preselectedObraId;
 
-  const InformeDiarioTrabajoFormScreen({super.key, this.informe});
+  const InformeDiarioTrabajoFormScreen({super.key, this.informe, this.preselectedObraId});
 
   @override
   State<InformeDiarioTrabajoFormScreen> createState() => _InformeDiarioTrabajoFormScreenState();
@@ -51,6 +52,7 @@ class _InformeDiarioTrabajoFormScreenState extends State<InformeDiarioTrabajoFor
       _maquinariaIds = List.from(inf.maquinariaIds);
     } else {
       _fecha = DateTime.now();
+      _selectedObraId = widget.preselectedObraId;
     }
   }
 
