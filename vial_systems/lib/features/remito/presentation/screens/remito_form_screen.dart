@@ -79,8 +79,32 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
       return;
     }
 
+    final messenger = ScaffoldMessenger.of(context);
+
+    // 1. UUID format validation
+    final uuidRegex = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
+    
+    final isObraUuid = _selectedObraId == null || _selectedObraId!.isEmpty || uuidRegex.hasMatch(_selectedObraId!);
+    final isMaterialUuid = _selectedMaterialId == null || _selectedMaterialId!.isEmpty || uuidRegex.hasMatch(_selectedMaterialId!);
+    final isTransportistaUuid = _selectedTransportistaId == null || _selectedTransportistaId!.isEmpty || uuidRegex.hasMatch(_selectedTransportistaId!);
+    final isChoferUuid = _selectedChoferId == null || _selectedChoferId!.isEmpty || uuidRegex.hasMatch(_selectedChoferId!);
+
+    debugPrint('=== VALIDACIÓN DE UUID ANTES DE GUARDAR REMITO ===');
+    debugPrint('• Obra ID: $_selectedObraId | Es UUID: $isObraUuid');
+    debugPrint('• Material ID: $_selectedMaterialId | Es UUID: $isMaterialUuid');
+    debugPrint('• Transportista ID: $_selectedTransportistaId | Es UUID: $isTransportistaUuid');
+    debugPrint('• Chofer ID: $_selectedChoferId | Es UUID: $isChoferUuid');
+    debugPrint('==================================================');
+
+    if (!isObraUuid || !isMaterialUuid || !isTransportistaUuid || !isChoferUuid) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Error: Uno o más de los elementos seleccionados corresponden a IDs numéricos antiguos. Por favor, seleccione elementos del catálogo actual con UUIDs válidos.')),
+      );
+      return;
+    }
+
     if (estado == RemitoStatus.listoParaEnviar && _fotos.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(content: Text('Debe adjuntar al menos 1 foto como evidencia antes de enviar el remito.')),
       );
       return;
@@ -110,11 +134,9 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
       await context.read<RemitoProvider>().saveRemito(remito);
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
-        );
-      }
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+      );
     }
   }
 
