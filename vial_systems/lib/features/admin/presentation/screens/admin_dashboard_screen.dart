@@ -5,6 +5,8 @@ import '../../../catalogs/presentation/screens/operative_catalogs_screen.dart';
 import 'admin_remitos_screen.dart';
 import 'admin_catalogs_screen.dart';
 import 'admin_informes_screen.dart';
+import '../../../home/presentation/widgets/notification_bell.dart';
+import '../../../home/presentation/widgets/notification_center_drawer.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -22,6 +24,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       appBar: AppBar(
         title: const Text('VialSystems - Panel Administrativo'),
         actions: [
+          const NotificationBell(),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Cerrar Sesión',
@@ -31,6 +34,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ],
       ),
+      endDrawer: const NotificationCenterDrawer(),
       body: Row(
         children: [
           NavigationRail(

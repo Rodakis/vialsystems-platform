@@ -37,6 +37,7 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
   final _observacionesController = TextEditingController();
   List<RemitoFotoModel> _fotos = [];
   final _imagePicker = ImagePicker();
+  bool _showPhotoError = false;
 
   @override
   void initState() {
@@ -104,10 +105,20 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
     }
 
     if (estado == RemitoStatus.listoParaEnviar && _fotos.isEmpty) {
+      setState(() {
+        _showPhotoError = true;
+      });
       messenger.showSnackBar(
-        const SnackBar(content: Text('Debe adjuntar al menos 1 foto como evidencia antes de enviar el remito.')),
+        const SnackBar(
+          content: Text('Debe agregar al menos una foto antes de enviar el remito.'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
+    } else {
+      setState(() {
+        _showPhotoError = false;
+      });
     }
 
     final now = DateTime.now();
@@ -208,6 +219,7 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
             usuario: usuario,
             tipoEvidencia: tipo,
           ));
+          _showPhotoError = false;
         });
       }
     }
@@ -231,6 +243,7 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
             usuario: usuario,
             tipoEvidencia: tipo,
           );
+          _showPhotoError = false;
         });
       }
     }
@@ -428,141 +441,174 @@ class _RemitoFormScreenState extends State<RemitoFormScreen> {
               const SizedBox(height: 16),
               
               // Evidencia fotografica
-              const Text('Evidencia Fotográfica *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 8),
-              if (_fotos.isNotEmpty)
-                Column(
-                  children: List.generate(_fotos.length, (index) {
-                    final foto = _fotos[index];
-                    final isLocal = !foto.path.startsWith('http') && !foto.path.startsWith('blob:');
-                    final dateStr = '${foto.fecha.day.toString().padLeft(2, '0')}/${foto.fecha.month.toString().padLeft(2, '0')} ${foto.fecha.hour.toString().padLeft(2, '0')}:${foto.fecha.minute.toString().padLeft(2, '0')}';
-                    
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Thumbnail
-                            Container(
-                              width: 85,
-                              height: 85,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: kIsWeb
-                                    ? Image.network(foto.path, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image))
-                                    : (isLocal
-                                        ? Image.file(File(foto.path), fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image))
-                                        : Image.network(foto.path, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image))),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // Metadata & Badges
-                            Expanded(
-                              child: Column(
+              Container(
+                padding: _showPhotoError ? const EdgeInsets.all(12) : EdgeInsets.zero,
+                decoration: _showPhotoError
+                    ? BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.red.shade300, width: 1.5),
+                      )
+                    : null,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Evidencia Fotográfica *',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: _showPhotoError ? Colors.red.shade900 : Colors.black,
+                      ),
+                    ),
+                    if (_showPhotoError) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Debe agregar al menos una foto antes de enviar el remito.',
+                        style: TextStyle(
+                          color: Colors.red.shade800,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    if (_fotos.isNotEmpty)
+                      Column(
+                        children: List.generate(_fotos.length, (index) {
+                          final foto = _fotos[index];
+                          final isLocal = !foto.path.startsWith('http') && !foto.path.startsWith('blob:');
+                          final dateStr = '${foto.fecha.day.toString().padLeft(2, '0')}/${foto.fecha.month.toString().padLeft(2, '0')} ${foto.fecha.hour.toString().padLeft(2, '0')}:${foto.fecha.minute.toString().padLeft(2, '0')}';
+                          
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Category Badge
+                                  // Thumbnail
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    width: 85,
+                                    height: 85,
                                     decoration: BoxDecoration(
-                                      color: Colors.blue.shade50,
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: Colors.blue.shade200),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: Colors.grey.shade300),
                                     ),
-                                    child: Text(
-                                      foto.tipoEvidencia,
-                                      style: TextStyle(
-                                        color: Colors.blue.shade800,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: kIsWeb
+                                          ? Image.network(foto.path, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image))
+                                          : (isLocal
+                                              ? Image.file(File(foto.path), fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image))
+                                              : Image.network(foto.path, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image))),
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Usuario: ${foto.usuario}',
-                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                  const SizedBox(width: 12),
+                                  // Metadata & Badges
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // Category Badge
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.blue.shade50,
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: Colors.blue.shade200),
+                                          ),
+                                          child: Text(
+                                            foto.tipoEvidencia,
+                                            style: TextStyle(
+                                              color: Colors.blue.shade800,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Usuario: ${foto.usuario}',
+                                          style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Fecha: $dateStr',
+                                          style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Fecha: $dateStr',
-                                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-                                  ),
+                                  // Action Buttons
+                                  if (!isReadOnly)
+                                    Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.sync, color: Colors.orange, size: 22),
+                                          tooltip: 'Reemplazar foto',
+                                          onPressed: () => _onReplacePressed(index),
+                                          constraints: const BoxConstraints(),
+                                          padding: const EdgeInsets.all(8),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete_outline, color: Colors.red, size: 22),
+                                          tooltip: 'Eliminar foto',
+                                          onPressed: () => _removePhoto(index),
+                                          constraints: const BoxConstraints(),
+                                          padding: const EdgeInsets.all(8),
+                                        ),
+                                      ],
+                                    ),
                                 ],
                               ),
                             ),
-                            // Action Buttons
-                            if (!isReadOnly)
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.sync, color: Colors.orange, size: 22),
-                                    tooltip: 'Reemplazar foto',
-                                    onPressed: () => _onReplacePressed(index),
-                                    constraints: const BoxConstraints(),
-                                    padding: const EdgeInsets.all(8),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete_outline, color: Colors.red, size: 22),
-                                    tooltip: 'Eliminar foto',
-                                    onPressed: () => _removePhoto(index),
-                                    constraints: const BoxConstraints(),
-                                    padding: const EdgeInsets.all(8),
-                                  ),
-                                ],
+                          );
+                        }),
+                      ),
+                    if (_fotos.isEmpty && isReadOnly)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text('No hay fotos adjuntas.', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey)),
+                      ),
+                    if (!isReadOnly) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _pickImage(ImageSource.camera),
+                              icon: const Icon(Icons.camera_alt),
+                              label: const Text('Tomar Foto'),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                               ),
-                          ],
-                        ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _pickImage(ImageSource.gallery),
+                              icon: const Icon(Icons.photo_library),
+                              label: const Text('Galería'),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    );
-                  }),
-                ),
-              if (_fotos.isEmpty && isReadOnly)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text('No hay fotos adjuntas.', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey)),
-                ),
-              if (!isReadOnly) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _pickImage(ImageSource.camera),
-                        icon: const Icon(Icons.camera_alt),
-                        label: const Text('Tomar Foto'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _pickImage(ImageSource.gallery),
-                        icon: const Icon(Icons.photo_library),
-                        label: const Text('Galería'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                      ),
-                    ),
+                    ],
                   ],
                 ),
-              ],
+              ),
               const SizedBox(height: 32),
 
               if (!isReadOnly) ...[

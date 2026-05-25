@@ -19,9 +19,14 @@ class InformeProvider extends ChangeNotifier {
 
   bool _isLoading = false;
 
+  // In-memory sync errors cache
+  final Map<String, String> _syncErrors = {};
+
   InformeProvider(this._repository) {
     loadInformes();
   }
+
+  Map<String, String> get syncErrors => _syncErrors;
 
   List<InformeDiarioModel> get informesDiarios => _informesDiarios;
   List<InformeDiarioTrabajoModel> get informesDiariosTrabajo => _informesDiariosTrabajo;
@@ -242,9 +247,12 @@ class InformeProvider extends ChangeNotifier {
             await _repository.deleteInformeDiario(inf.id);
           }
           await _repository.saveInformeDiario(updated);
+          _syncErrors.remove(inf.id);
+          _syncErrors.remove(validId);
 
         } catch (e) {
           debugPrint('Error sincronizando informe diario ${inf.id}: $e');
+          _syncErrors[inf.id] = e.toString();
           final updatedError = InformeDiarioModel(
             id: inf.id,
             fecha: inf.fecha,
@@ -334,9 +342,12 @@ class InformeProvider extends ChangeNotifier {
             await _repository.deleteInformeDiarioTrabajo(inf.id);
           }
           await _repository.saveInformeDiarioTrabajo(updated);
+          _syncErrors.remove(inf.id);
+          _syncErrors.remove(validId);
 
         } catch (e) {
           debugPrint('Error sincronizando informe trabajo ${inf.id}: $e');
+          _syncErrors[inf.id] = e.toString();
           final updatedError = InformeDiarioTrabajoModel(
             id: inf.id,
             fecha: inf.fecha,

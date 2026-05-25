@@ -136,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 const Text(
-                  'Usuarios de prueba:\noperador@test.com / oficina@test.com / admin@test.com\nPass: 123456', 
+                  'Usuarios de prueba:\nadmin@test.com / user@test.com\nPass: 123', 
                   textAlign: TextAlign.center, 
                   style: TextStyle(color: Colors.grey, fontSize: 12),
                 ),

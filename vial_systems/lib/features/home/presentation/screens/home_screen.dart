@@ -4,6 +4,8 @@ import '../../../../core/providers/auth_provider.dart';
 import '../../../catalogs/presentation/screens/catalogs_screen.dart';
 import '../../../remito/presentation/screens/remito_list_screen.dart';
 import '../../../informes/presentation/screens/informe_list_screen.dart';
+import '../widgets/notification_bell.dart';
+import '../widgets/notification_center_drawer.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -18,6 +20,7 @@ class HomeScreen extends StatelessWidget {
         title: const Text('VialSystems'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
+          const NotificationBell(),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
@@ -27,6 +30,7 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
+      endDrawer: const NotificationCenterDrawer(),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),

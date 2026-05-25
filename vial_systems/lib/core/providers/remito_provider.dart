@@ -13,9 +13,14 @@ class RemitoProvider extends ChangeNotifier {
   List<RemitoModel> _adminRemitos = [];
   bool _isLoading = false;
 
+  // In-memory sync errors cache
+  final Map<String, String> _syncErrors = {};
+
   RemitoProvider(this._repository) {
     loadRemitos();
   }
+
+  Map<String, String> get syncErrors => _syncErrors;
 
   List<RemitoModel> get remitos => _remitos;
   List<RemitoModel> get adminRemitos => _adminRemitos;
@@ -177,9 +182,12 @@ class RemitoProvider extends ChangeNotifier {
             await _repository.deleteRemito(r.id);
           }
           await _repository.saveRemito(updated);
+          _syncErrors.remove(r.id);
+          _syncErrors.remove(validId);
           
         } catch (e) {
           debugPrint('Error sincronizando remito ${r.id}: $e');
+          _syncErrors[r.id] = e.toString();
           final updatedError = RemitoModel(
             id: r.id,
             fecha: r.fecha,

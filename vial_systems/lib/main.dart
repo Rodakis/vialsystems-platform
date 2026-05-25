@@ -15,6 +15,7 @@ import 'features/remito/data/repositories/local_remito_repository.dart';
 import 'core/providers/remito_provider.dart';
 import 'features/informes/data/repositories/local_informe_repository.dart';
 import 'core/providers/informe_provider.dart';
+import 'core/providers/notification_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +38,14 @@ Future<void> main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => InformeProvider(LocalInformeRepository()),
+        ),
+        ChangeNotifierProxyProvider2<RemitoProvider, InformeProvider, NotificationProvider>(
+          create: (context) => NotificationProvider(
+            context.read<RemitoProvider>(),
+            context.read<InformeProvider>(),
+          ),
+          update: (context, remitoProvider, informeProvider, notificationProvider) =>
+              notificationProvider!..updateProviders(remitoProvider, informeProvider),
         ),
       ],
       child: const VialSystemsApp(),
