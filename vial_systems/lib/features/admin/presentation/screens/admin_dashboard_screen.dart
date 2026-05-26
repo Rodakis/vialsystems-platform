@@ -22,7 +22,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('VialSystems - Panel Administrativo'),
+        title: const Text('VialSystems - Panel Administrativo [MVP v0.1 TEST]'),
         actions: [
           const NotificationBell(),
           IconButton(

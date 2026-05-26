@@ -91,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Icon(Icons.local_shipping, size: 100, color: Colors.blueAccent),
                 const SizedBox(height: 32),
                 const Text(
-                  'VialSystems',
+                  'VialSystems [MVP v0.1 TEST]',
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),

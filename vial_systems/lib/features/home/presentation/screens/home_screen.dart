@@ -17,7 +17,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('VialSystems'),
+        title: const Text('VialSystems [MVP v0.1 TEST]'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           const NotificationBell(),
@@ -40,7 +40,7 @@ class HomeScreen extends StatelessWidget {
               const Icon(Icons.construction, size: 80, color: Colors.blueAccent),
               const SizedBox(height: 16),
               const Text(
-                'VialSystems - Fase 08',
+                'VialSystems [MVP v0.1 TEST]',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
