@@ -36,15 +36,23 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    final user = await _authRepository.login(email, password);
-    
-    if (user != null) {
-      _currentUser = user;
-      _isLoading = false;
-      notifyListeners();
-      return true;
-    } else {
-      _errorMessage = 'Credenciales invalidas';
+    try {
+      final user = await _authRepository.login(email, password);
+      
+      if (user != null) {
+        _currentUser = user;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = 'Credenciales inválidas';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      debugPrint('AuthProvider catch: $e');
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
       _isLoading = false;
       notifyListeners();
       return false;
