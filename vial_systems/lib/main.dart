@@ -7,6 +7,7 @@ import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/home/presentation/screens/home_screen.dart';
 import 'features/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'features/auth/domain/models/user_model.dart';
+import 'core/theme/app_theme.dart';
 
 import 'features/catalogs/data/repositories/supabase_catalog_repository.dart';
 import 'core/providers/catalog_provider.dart';
@@ -67,10 +68,7 @@ class VialSystemsApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'VialSystems',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
       home: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
           if (!authProvider.isInitialized) {
