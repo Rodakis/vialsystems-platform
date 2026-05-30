@@ -13,7 +13,7 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<UserModel?> login(String email, String password) async {
     try {
       debugPrint('--- SUPABASE AUTH LOGIN ---');
-      debugPrint('Intentando iniciar sesión real con Supabase para: $email');
+      debugPrint('Intentando iniciar sesión real con Supabase.');
       
       final response = await _supabase.auth.signInWithPassword(
         email: email,
@@ -46,14 +46,14 @@ class SupabaseAuthRepository implements AuthRepository {
       }
 
       if (profileResponse == null) {
-        debugPrint('Error: No se encontró perfil en la tabla profiles para el usuario ID: ${user.id}');
+        debugPrint('Error: No se encontró perfil en la tabla profiles para el usuario autenticado.');
         await _supabase.auth.signOut();
         throw Exception('No se encontró el perfil de usuario asociado en la base de datos.');
       }
 
       final isActive = profileResponse['activo'] as bool? ?? true;
       if (!isActive) {
-        debugPrint('Error: El usuario ${user.email} se encuentra inactivo.');
+        debugPrint('Error: El usuario autenticado se encuentra inactivo.');
         await _supabase.auth.signOut();
         throw Exception('El usuario se encuentra inactivo. Comuníquese con el administrador.');
       }

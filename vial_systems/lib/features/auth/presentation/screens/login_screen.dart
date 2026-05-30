@@ -54,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final email = _emailController.text.trim();
       final password = _passwordController.text;
       
-      debugPrint('Intentando login con email: $email');
+      debugPrint('Intentando login con credenciales ingresadas.');
       
       final success = await authProvider.login(email, password);
       

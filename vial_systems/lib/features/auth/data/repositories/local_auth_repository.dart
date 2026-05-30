@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/user_model.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -15,6 +16,10 @@ class LocalAuthRepository implements AuthRepository {
 
   @override
   Future<UserModel?> login(String email, String password) async {
+    if (!kDebugMode) {
+      throw UnsupportedError('LocalAuthRepository is disabled in production builds.');
+    }
+
     // Simular retardo de red
     await Future.delayed(const Duration(milliseconds: 100));
     
@@ -45,6 +50,10 @@ class LocalAuthRepository implements AuthRepository {
 
   @override
   Future<UserModel?> getCurrentUser() async {
+    if (!kDebugMode) {
+      return null;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final userStr = prefs.getString(_userKey);
     

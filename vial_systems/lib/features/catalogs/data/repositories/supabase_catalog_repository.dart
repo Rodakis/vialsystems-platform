@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -27,21 +26,13 @@ class SupabaseCatalogRepository implements CatalogRepository {
 
   void _logSupabaseStatus(String table, String operation, [dynamic error]) {
     try {
-      final user = _supabase.auth.currentUser;
       final session = _supabase.auth.currentSession;
       debugPrint('================================================================');
       debugPrint('--- MONITOREO SUPABASE PARA OPERACIÓN: $operation ---');
       debugPrint('Tabla Destino: $table');
-      if (user != null) {
-        debugPrint('Usuario Autenticado: ${user.email} (ID: ${user.id})');
-      } else {
-        debugPrint('Usuario Autenticado: NINGUNO (Sesión anónima o no iniciada)');
-      }
+      debugPrint('Usuario Autenticado: ${session != null ? 'SÍ' : 'NO'}');
       if (session != null) {
         debugPrint('Sesión Activa: SÍ');
-        final token = session.accessToken;
-        final len = token.length;
-        debugPrint('Access Token (primeros 20 caracteres): ${token.substring(0, math.min(20, len))}...');
         debugPrint('Token expiración: ${session.expiresAt != null ? DateTime.fromMillisecondsSinceEpoch(session.expiresAt! * 1000).toLocal() : 'No expira/Nulo'}');
       } else {
         debugPrint('Sesión Activa: NO (Sin credenciales en el cliente Supabase)');
