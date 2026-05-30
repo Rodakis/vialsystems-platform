@@ -4,6 +4,7 @@ import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/providers/catalog_provider.dart';
 import '../../../auth/domain/models/user_model.dart';
 import '../../domain/models/catalog_models.dart';
+import '../../../../shared/widgets/industrial_tab_bar.dart';
 
 class OperativeCatalogsScreen extends StatefulWidget {
   const OperativeCatalogsScreen({super.key});
@@ -47,14 +48,11 @@ class _OperativeCatalogsScreenState extends State<OperativeCatalogsScreen> with 
     return Column(
       children: [
         Container(
-          color: Theme.of(context).cardColor,
-          child: TabBar(
+          color: Theme.of(context).colorScheme.surface,
+          child: IndustrialTabBar(
             controller: _tabController,
-            labelColor: Theme.of(context).primaryColor,
-            unselectedLabelColor: Colors.grey,
             isScrollable: true,
-            indicatorColor: Theme.of(context).primaryColor,
-            indicatorWeight: 3,
+            onDarkBackground: false,
             tabs: const [
               Tab(text: 'Proveedores'),
               Tab(text: 'Maquinaria'),

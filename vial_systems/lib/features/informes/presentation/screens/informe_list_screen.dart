@@ -7,6 +7,7 @@ import '../../domain/models/informe_diario_model.dart';
 import '../../domain/models/informe_diario_trabajo_model.dart';
 import 'informe_diario_form_screen.dart';
 import 'informe_diario_trabajo_form_screen.dart';
+import '../../../../shared/widgets/industrial_tab_bar.dart';
 
 class InformeListScreen extends StatelessWidget {
   const InformeListScreen({super.key});
@@ -18,7 +19,8 @@ class InformeListScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Informes y Partes Diarios'),
-          bottom: const TabBar(
+          bottom: const IndustrialTabBar(
+            onDarkBackground: true,
             tabs: [
               Tab(
                 icon: Icon(Icons.wb_sunny_outlined),

@@ -48,7 +48,7 @@ class _IndustrialLogoPainter extends CustomPainter {
 
     // 2. Dibujar franjas industriales de advertencia en diagonal (estilo Caterpillar)
     final stripePaint = Paint()
-      ..color = AppColors.yellowIndustrial.withOpacity(0.15)
+      ..color = AppColors.yellowIndustrial.withValues(alpha: 0.15)
       ..style = PaintingStyle.fill
       ..isAntiAlias = true;
 
@@ -88,7 +88,7 @@ class _IndustrialLogoPainter extends CustomPainter {
 
     // 4. Dibujar líneas punteadas blancas en el centro de la V como marca de carril vial
     final dashPaint = Paint()
-      ..color = Colors.white.withOpacity(0.85)
+      ..color = Colors.white.withValues(alpha: 0.85)
       ..strokeWidth = size.width * 0.03
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;

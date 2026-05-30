@@ -4,6 +4,7 @@ import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/providers/catalog_provider.dart';
 import '../../../auth/domain/models/user_model.dart';
 import '../../../catalogs/domain/models/catalog_models.dart';
+import '../../../../shared/widgets/industrial_tab_bar.dart';
 
 class AdminCatalogsScreen extends StatefulWidget {
   const AdminCatalogsScreen({super.key});
@@ -35,11 +36,10 @@ class _AdminCatalogsScreenState extends State<AdminCatalogsScreen> with SingleTi
 
     return Column(
       children: [
-        TabBar(
+        IndustrialTabBar(
           controller: _tabController,
-          labelColor: Theme.of(context).primaryColor,
-          unselectedLabelColor: Colors.grey,
           isScrollable: true,
+          onDarkBackground: false,
           tabs: const [
             Tab(text: 'Obras'),
             Tab(text: 'Materiales'),

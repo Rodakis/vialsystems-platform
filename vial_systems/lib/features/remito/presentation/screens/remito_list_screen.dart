@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/providers/remito_provider.dart';
 import '../../domain/models/remito_model.dart';
 import 'remito_form_screen.dart';
+import '../../../../shared/widgets/industrial_tab_bar.dart';
 
 class RemitoListScreen extends StatelessWidget {
   const RemitoListScreen({super.key});
@@ -14,7 +15,8 @@ class RemitoListScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Informes de Acarreo'),
-          bottom: const TabBar(
+          bottom: const IndustrialTabBar(
+            onDarkBackground: true,
             tabs: [
               Tab(text: 'Historial'),
               Tab(text: 'Cola de Envío'),

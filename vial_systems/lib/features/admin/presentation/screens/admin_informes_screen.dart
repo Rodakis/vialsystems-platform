@@ -6,6 +6,7 @@ import '../../../../core/providers/informe_provider.dart';
 import '../../../informes/domain/models/informe_diario_model.dart';
 import '../../../informes/domain/models/informe_diario_trabajo_model.dart';
 import '../../../catalogs/domain/models/catalog_models.dart';
+import '../../../../shared/widgets/industrial_tab_bar.dart';
 
 class AdminInformesScreen extends StatefulWidget {
   const AdminInformesScreen({super.key});
@@ -96,10 +97,8 @@ class _AdminInformesScreenState extends State<AdminInformesScreen> {
             const SizedBox(height: 16),
 
             // TabBar to switch between kinds of reports
-            const TabBar(
-              labelColor: Colors.blueAccent,
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: Colors.blueAccent,
+            const IndustrialTabBar(
+              onDarkBackground: false,
               tabs: [
                 Tab(
                   icon: Icon(Icons.assignment_outlined),

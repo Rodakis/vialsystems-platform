@@ -115,6 +115,23 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
       ),
+
+      tabBarTheme: TabBarThemeData(
+        labelColor: AppColors.darkGraphite,
+        unselectedLabelColor: AppColors.darkGraphite.withValues(alpha: 0.65),
+        indicatorColor: AppColors.yellowIndustrial,
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        labelStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 14.5,
+          letterSpacing: 0.3,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w500,
+          fontSize: 14.0,
+        ),
+      ),
     );
   }
 }

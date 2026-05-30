@@ -4,6 +4,7 @@ import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/providers/catalog_provider.dart';
 import '../../../auth/domain/models/user_model.dart';
 import '../../domain/models/catalog_models.dart';
+import '../../../../shared/widgets/industrial_tab_bar.dart';
 
 class CatalogsScreen extends StatelessWidget {
   const CatalogsScreen({super.key});
@@ -18,8 +19,9 @@ class CatalogsScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Catálogos y Obras'),
-          bottom: const TabBar(
+          bottom: const IndustrialTabBar(
             isScrollable: true,
+            onDarkBackground: true,
             tabs: [
               Tab(text: 'Obras'),
               Tab(text: 'Materiales'),
